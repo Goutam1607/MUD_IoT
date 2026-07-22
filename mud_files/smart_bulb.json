@@ -1,0 +1,70 @@
+{
+  "ietf-mud:mud": {
+    "mud-version": 1,
+    "mud-url": "http://localhost:5000/mud/smart_bulb.json",
+    "last-update": "2025-01-15T10:00:00+00:00",
+    "cache-validity": 48,
+    "is-supported": true,
+    "systeminfo": "Smart Bulb - controllable via local network only",
+    "from-device-policy": {
+      "access-lists": {
+        "access-list": [{ "name": "from-bulb-acl" }]
+      }
+    },
+    "to-device-policy": {
+      "access-lists": {
+        "access-list": [{ "name": "to-bulb-acl" }]
+      }
+    }
+  },
+  "ietf-access-control-list:acls": {
+    "acl": [
+      {
+        "name": "from-bulb-acl",
+        "type": "ipv4-acl-type",
+        "aces": {
+          "ace": [
+            {
+              "name": "allow-coap-outbound",
+              "matches": {
+                "ipv4": { "dst-address": "192.168.1.0/24" },
+                "udp": { "dst-port": { "operator": "eq", "port": 5683 } }
+              },
+              "actions": { "forwarding": "accept" }
+            },
+            {
+              "name": "deny-internet-access",
+              "matches": {
+                "ipv4": { "dst-address": "0.0.0.0/0" }
+              },
+              "actions": { "forwarding": "drop" }
+            }
+          ]
+        }
+      },
+      {
+        "name": "to-bulb-acl",
+        "type": "ipv4-acl-type",
+        "aces": {
+          "ace": [
+            {
+              "name": "allow-local-control",
+              "matches": {
+                "ipv4": { "src-address": "192.168.1.0/24" },
+                "udp": { "src-port": { "operator": "eq", "port": 5683 } }
+              },
+              "actions": { "forwarding": "accept" }
+            },
+            {
+              "name": "deny-all-inbound",
+              "matches": {
+                "ipv4": { "src-address": "0.0.0.0/0" }
+              },
+              "actions": { "forwarding": "drop" }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

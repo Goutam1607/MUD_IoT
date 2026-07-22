@@ -1,0 +1,78 @@
+{
+  "ietf-mud:mud": {
+    "mud-version": 1,
+    "mud-url": "http://localhost:5000/mud/temperature_sensor.json",
+    "last-update": "2025-01-15T10:00:00+00:00",
+    "cache-validity": 48,
+    "is-supported": true,
+    "systeminfo": "Smart Temperature Sensor - sends readings every 5 minutes",
+    "from-device-policy": {
+      "access-lists": {
+        "access-list": [{ "name": "from-sensor-acl" }]
+      }
+    },
+    "to-device-policy": {
+      "access-lists": {
+        "access-list": [{ "name": "to-sensor-acl" }]
+      }
+    }
+  },
+  "ietf-access-control-list:acls": {
+    "acl": [
+      {
+        "name": "from-sensor-acl",
+        "type": "ipv4-acl-type",
+        "aces": {
+          "ace": [
+            {
+              "name": "allow-mqtt-outbound",
+              "matches": {
+                "ipv4": { "dst-address": "192.168.1.100" },
+                "tcp": { "dst-port": { "operator": "eq", "port": 1883 } }
+              },
+              "actions": { "forwarding": "accept" }
+            },
+            {
+              "name": "allow-https-updates",
+              "matches": {
+                "ipv4": { "dst-address": "0.0.0.0/0" },
+                "tcp": { "dst-port": { "operator": "eq", "port": 443 } }
+              },
+              "actions": { "forwarding": "accept" }
+            },
+            {
+              "name": "deny-all-other",
+              "matches": {
+                "ipv4": { "dst-address": "0.0.0.0/0" }
+              },
+              "actions": { "forwarding": "drop" }
+            }
+          ]
+        }
+      },
+      {
+        "name": "to-sensor-acl",
+        "type": "ipv4-acl-type",
+        "aces": {
+          "ace": [
+            {
+              "name": "allow-mqtt-inbound",
+              "matches": {
+                "ipv4": { "src-address": "192.168.1.100" },
+                "tcp": { "src-port": { "operator": "eq", "port": 1883 } }
+              },
+              "actions": { "forwarding": "accept" }
+            },
+            {
+              "name": "deny-all-inbound",
+              "matches": {
+                "ipv4": { "src-address": "0.0.0.0/0" }
+              },
+              "actions": { "forwarding": "drop" }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
