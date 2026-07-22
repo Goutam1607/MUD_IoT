@@ -2,6 +2,7 @@ import requests
 import json
 import csv
 import os
+from rule_enforcer import apply_all_rules
 from datetime import datetime
 from colorama import Fore, Style, init
 init(autoreset=True)
@@ -121,6 +122,9 @@ def process_device(device_name, mud_url):
         return
 
     rules = parse_mud_rules(mud_file)
+rules = parse_mud_rules(mud_file)
+apply_all_rules(rules)   # NEW: push these rules to the real Linux firewall
+simulate_acl_enforcement(rules, test_connections)
 
     # Test cases: what traffic should be allowed vs blocked?
     test_connections = [
