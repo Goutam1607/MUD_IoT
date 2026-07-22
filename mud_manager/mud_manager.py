@@ -122,7 +122,6 @@ def process_device(device_name, mud_url):
         return
 
     rules = parse_mud_rules(mud_file)
-rules = parse_mud_rules(mud_file)
 apply_all_rules(rules)   # NEW: push these rules to the real Linux firewall
 simulate_acl_enforcement(rules, test_connections)
 
