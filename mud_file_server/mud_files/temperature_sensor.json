@@ -31,8 +31,8 @@
             "ace": [{
               "name": "mqtt-rule",
               "matches": {
-                "ipv4": { "dst-address": "10.211.83.196/32" },
-                "tcp":  { "dst-port": { "port": 1883 } }
+                "ipv4": { "destination-ipv4-network": "10.211.83.196/32" },
+                "tcp":  { "destination-port": { "port": 1883 } }
               },
               "actions": { "forwarding": "accept" }
             }]
@@ -44,7 +44,7 @@
             "ace": [{
               "name": "https-rule",
               "matches": {
-                "tcp": { "dst-port": { "port": 443 } }
+                "tcp": { "destination-port": { "port": 443 } }
               },
               "actions": { "forwarding": "accept" }
             }]
@@ -66,7 +66,7 @@
             "ace": [{
               "name": "mqtt-inbound-rule",
               "matches": {
-                "tcp": { "dst-port": { "port": 1883 } }
+                "tcp": { "destination-port": { "port": 1883 } }
               },
               "actions": { "forwarding": "accept" }
             }]

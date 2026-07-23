@@ -57,8 +57,8 @@ def parse_mud_rules(mud_file):
     print(f"  MUD URL:     {mud_info.get('mud-url', 'Unknown')}")
     print(f"  Last Update: {mud_info.get('last-update', 'Unknown')}")
 
-    acls = mud_file.get("ietf-access-control-list:acls", {})
-    acl_list = acls.get("acl", [])
+    acls = mud_file.get("ietf-mud:mud", {}).get("access-lists", {})
+    acl_list = acls.get("access-list", [])
 
     rules = []
     for acl in acl_list:
@@ -122,15 +122,14 @@ def process_device(device_name, mud_url):
         return
 
     rules = parse_mud_rules(mud_file)
-apply_all_rules(rules)   # NEW: push these rules to the real Linux firewall
-simulate_acl_enforcement(rules, test_connections)
+    apply_all_rules(rules)  # NEW: push these rules to the real Linux firewall
 
     # Test cases: what traffic should be allowed vs blocked?
     test_connections = [
-        {"dst": "192.168.1.100", "port": 1883, "desc": "MQTT to broker (legit)"},
-        {"dst": "8.8.8.8",       "port": 80,   "desc": "HTTP to random IP (suspicious)"},
-        {"dst": "any",           "port": 443,  "desc": "HTTPS firmware update (legit)"},
-        {"dst": "10.0.0.50",     "port": 22,   "desc": "SSH to unknown host (attack!)"},
+            {"dst": "10.211.83.196", "port": 1883, "desc": "MQTT to Pi broker (ALLOWED by MUD)"},
+            {"dst": "8.8.8.8",       "port": 443,  "desc": "HTTPS firmware update (ALLOWED by MUD)"},
+            {"dst": "10.211.83.201", "port": 80,   "desc": "HTTP to phone gateway (BLOCKED by MUD)"},
+            {"dst": "10.211.83.201", "port": 22,   "desc": "SSH attack to gateway (BLOCKED by MUD)"},
     ]
     simulate_acl_enforcement(rules, test_connections, device_name=device_name)
 
