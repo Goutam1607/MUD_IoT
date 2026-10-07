@@ -1,0 +1,102 @@
+{
+  "ietf-mud:mud": {
+    "mud-version": 1,
+    "mud-url": "http://10.42.0.1:5000/mud/ip_camera.json",
+    "last-update": "2026-10-07T13:00:00+05:30",
+    "cache-validity": 48,
+    "is-supported": true,
+    "systeminfo": "CP PLUS CP-E35Q 3MP WiFi cloud camera (ezyKam+) - policy derived from traffic measured on MUD_Gateway on 2026-10-07",
+    "from-device-policy": {
+      "access-lists": {
+        "access-list": [
+          { "name": "cam-from-dns" },
+          { "name": "cam-from-cloud-control" },
+          { "name": "cam-from-cloud-api" },
+          { "name": "cam-from-stun" },
+          { "name": "cam-from-video-relay" },
+          { "name": "cam-from-deny-all" }
+        ]
+      }
+    },
+    "to-device-policy": {
+      "access-lists": {
+        "access-list": [
+          { "name": "cam-to-deny-all" }
+        ]
+      }
+    },
+    "access-lists": {
+      "access-list": [
+        {
+          "name": "cam-from-dns",
+          "aces": { "ace": [{
+            "name": "dns-google",
+            "matches": {
+              "ipv4": { "destination-ipv4-network": "8.8.8.8/32" },
+              "udp":  { "destination-port": { "operator": "eq", "port": 53 } }
+            },
+            "actions": { "forwarding": "accept" }
+          }]}
+        },
+        {
+          "name": "cam-from-cloud-control",
+          "aces": { "ace": [{
+            "name": "cloud-control-8886",
+            "matches": {
+              "ipv4": { "ietf-acldns:dst-dnsname": "m6-cube.cppluscloud.com" },
+              "tcp":  { "destination-port": { "operator": "eq", "port": 8886 } }
+            },
+            "actions": { "forwarding": "accept" }
+          }]}
+        },
+        {
+          "name": "cam-from-cloud-api",
+          "aces": { "ace": [{
+            "name": "cloud-api-https",
+            "matches": {
+              "ipv4": { "ietf-acldns:dst-dnsname": "a6-cube.cppluscloud.com" },
+              "tcp":  { "destination-port": { "operator": "eq", "port": 443 } }
+            },
+            "actions": { "forwarding": "accept" }
+          }]}
+        },
+        {
+          "name": "cam-from-stun",
+          "aces": { "ace": [{
+            "name": "stun-3478",
+            "matches": {
+              "udp": { "destination-port": { "operator": "eq", "port": 3478 } }
+            },
+            "actions": { "forwarding": "accept" }
+          }]}
+        },
+        {
+          "name": "cam-from-video-relay",
+          "aces": { "ace": [{
+            "name": "relay-1443",
+            "matches": {
+              "tcp": { "destination-port": { "operator": "eq", "port": 1443 } }
+            },
+            "actions": { "forwarding": "accept" }
+          }]}
+        },
+        {
+          "name": "cam-from-deny-all",
+          "aces": { "ace": [{
+            "name": "deny-all-out",
+            "matches": {},
+            "actions": { "forwarding": "drop" }
+          }]}
+        },
+        {
+          "name": "cam-to-deny-all",
+          "aces": { "ace": [{
+            "name": "deny-all-in",
+            "matches": {},
+            "actions": { "forwarding": "drop" }
+          }]}
+        }
+      ]
+    }
+  }
+}
