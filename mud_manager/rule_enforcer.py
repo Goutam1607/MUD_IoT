@@ -29,6 +29,11 @@ def apply_all_rules(rules):
     # Allow established/related connections (response packets)
     subprocess.run(["sudo","iptables","-A","INPUT","-m","conntrack","--ctstate","ESTABLISHED,RELATED","-j","ACCEPT"], capture_output=True)
     print("[ENFORCER] Standard rules added (loopback + established connections)")
+    # Block unauthorized outbound ports (OUTPUT chain)
+    blocked_ports = [80, 8080, 53, 22, 23, 3306, 6667, 4444, 31337]
+    for port in blocked_ports:
+        subprocess.run(["sudo","iptables","-A","OUTPUT","-p","tcp","--dport",str(port),"-j","DROP"], capture_output=True)
+    print("[ENFORCER] Outbound block rules added to OUTPUT chain")
     for rule in rules:
         apply_rule(action=rule["action"], dst_ip=rule["dst"], port=rule["port"])
     print(f"{Fore.CYAN}[ENFORCER] All {len(rules)} MUD rules pushed to the real firewall.")

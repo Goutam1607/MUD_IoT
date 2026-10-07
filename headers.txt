@@ -1,0 +1,8 @@
+HTTP/1.1 200 OK
+Server: Werkzeug/3.1.8 Python/3.13.5
+Date: Mon, 03 Aug 2026 08:17:31 GMT
+Content-Type: application/mud+json
+Content-Length: 2317
+X-MUD-Signature: 8e1f67058df10b9b8d753e4aa01e1ef24c925057a1acc8850f4a3c8cc4d6dafb
+Connection: close
+

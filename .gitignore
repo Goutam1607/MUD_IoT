@@ -1,4 +1,6 @@
 venv/
 __pycache__/
 *.pyc
-.pytest_cache/
+.pytest_cache/# secrets - never commit
+*.pem
+shared_secret.py

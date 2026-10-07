@@ -1,5 +1,33 @@
 import socket
 import time
+import csv
+import os
+from datetime import datetime
+
+LOG_FILE = os.path.join(os.path.dirname(__file__), 'logs', 'mud_traffic_log.csv')
+
+
+def log_decision(src_device, dst_ip, port, action, matched_rule):
+    """
+    Appends one row to the SAME CSV audit log used by mud_manager.py,
+    so all enforcement decisions (both normal test connections and
+    rogue attack attempts) live in one unified, chronological trail.
+    """
+    file_exists = os.path.isfile(LOG_FILE)
+    os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
+
+    with open(LOG_FILE, mode='a', newline='') as f:
+        writer = csv.writer(f)
+        if not file_exists:
+            writer.writerow(["timestamp", "device", "destination_ip", "port", "action", "matched_rule"])
+        writer.writerow([
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            src_device,
+            dst_ip,
+            port,
+            action,
+            matched_rule
+        ])
 
 GREEN  = "\033[92m"
 RED    = "\033[91m"
@@ -50,6 +78,15 @@ for i, conn in enumerate(CONNECTIONS, 1):
 
     connected = try_connect(dst, port)
     actual    = "ALLOWED" if connected else "BLOCKED"
+
+    # NEW: log every rogue device attempt to the shared audit trail
+    log_decision(
+        src_device="Rogue Device (Compromised Sensor)",
+        dst_ip=dst,
+        port=port,
+        action=actual,
+        matched_rule=desc
+    )
 
     if actual == expect == "ALLOWED":
         print(f"{GREEN}CONNECTED — MUD ALLOWS this ✓{RESET}")

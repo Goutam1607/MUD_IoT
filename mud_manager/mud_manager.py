@@ -2,10 +2,47 @@ import requests
 import json
 import csv
 import os
+import sys
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.exceptions import InvalidSignature
 from rule_enforcer import apply_all_rules
 from datetime import datetime
 from colorama import Fore, Style, init
 init(autoreset=True)
+
+# Load the RSA PUBLIC key ONCE at manager startup.
+# The manager only ever has the public key -- it can verify
+# signatures but can NEVER create a new valid one, unlike the
+# old HMAC approach where both sides shared the same secret.
+PUBLIC_KEY_PATH = os.path.join(os.path.dirname(__file__), '..', 'mud_public_key.pem')
+with open(PUBLIC_KEY_PATH, "rb") as key_file:
+    PUBLIC_KEY = serialization.load_pem_public_key(key_file.read())
+
+
+def verify_signature(data_bytes, received_signature_hex):
+    """
+    Verifies an RSA-2048 + SHA-256 (PSS) signature using the public
+    key. Returns True if the signature is valid (meaning the file
+    was truly signed by whoever holds the private key, and was not
+    modified in transit), False otherwise.
+    """
+    try:
+        signature_bytes = bytes.fromhex(received_signature_hex)
+        PUBLIC_KEY.verify(
+            signature_bytes,
+            data_bytes,
+            padding.PSS(
+                mgf=padding.MGF1(hashes.SHA256()),
+                salt_length=padding.PSS.MAX_LENGTH
+            ),
+            hashes.SHA256()
+        )
+        return True
+    except InvalidSignature:
+        return False
+    except Exception:
+        return False
 
 LOG_FILE = os.path.join(os.path.dirname(__file__), '..', 'logs', 'mud_traffic_log.csv')
 
@@ -35,14 +72,35 @@ def log_decision(src_device, dst_ip, port, action, matched_rule):
 
 
 def fetch_mud_file(mud_url):
-    """Step 1: Fetch the MUD file from the manufacturer's server"""
+    """Step 1: Fetch the MUD file AND verify its digital signature
+    before trusting it."""
     print(f"\n{Fore.CYAN}[MUD MANAGER] Fetching MUD file from: {mud_url}")
     try:
         response = requests.get(mud_url, timeout=10)
         response.raise_for_status()
+
+        raw_bytes = response.content
+        received_signature = response.headers.get('X-MUD-Signature')
+
+        if not received_signature:
+            print(f"{Fore.RED}[MUD MANAGER] REJECTED: No signature header present. "
+                  f"Refusing to trust unsigned MUD file.")
+            return None
+
+        print(f"{Fore.YELLOW}[MUD MANAGER] Verifying RSA-2048/SHA-256 signature...")
+        is_valid = verify_signature(raw_bytes, received_signature)
+
+        if not is_valid:
+            print(f"{Fore.RED}[MUD MANAGER] REJECTED: Signature verification FAILED! "
+                  f"File may be tampered or forged. No rules will be applied.")
+            return None
+
+        print(f"{Fore.GREEN}[MUD MANAGER] Signature VERIFIED. File is authentic.")
+
         mud_file = response.json()
         print(f"{Fore.GREEN}[MUD MANAGER] Successfully fetched MUD file!")
         return mud_file
+
     except requests.exceptions.RequestException as e:
         print(f"{Fore.RED}[MUD MANAGER] ERROR: Could not fetch MUD file: {e}")
         return None
