@@ -1,0 +1,14 @@
+[Unit]
+Description=MUD gateway watchdog for the IP camera (hot-reloads ip_camera.json)
+After=mud-server.service NetworkManager.service network-online.target
+Wants=mud-server.service network-online.target
+
+[Service]
+User=root
+WorkingDirectory=/home/pi/mud_iot_project/mud_manager
+ExecStart=/home/pi/mud_iot_project/venv/bin/python3 -u watchdog_monitor.py --name CAM --ip 10.42.0.17 --url http://127.0.0.1:5000/mud/ip_camera.json --interval 2
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

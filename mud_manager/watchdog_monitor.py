@@ -227,7 +227,7 @@ def main():
 
                     t0 = now_ms()
                     for n in {r["dnsname"] for r in new_rules if r["dnsname"]}:
-                        if n not in dns_cache:      # only NEW names cost DNS time
+                        if not dns_cache.get(n):    # only NEW/unresolved names cost DNS time
                             dns_cache[n] = resolve(n)
                     t_dns = now_ms() - t0
 
@@ -254,8 +254,11 @@ def main():
                                           "detected_at": detected_at,
                                           "applied_at": applied_at})
 
-            # periodic DNS refresh: cloud load-balancer IPs rotate
-            if rules and time.time() - last_dns > a.dns_refresh:
+            # periodic DNS refresh: cloud load-balancer IPs rotate.
+            # If a name did not resolve yet (e.g. at boot, before the uplink
+            # was up), retry it every cycle instead of waiting --dns-refresh.
+            unresolved = any(not v for v in dns_cache.values())
+            if rules and (unresolved or time.time() - last_dns > a.dns_refresh):
                 last_dns = time.time()
                 changed = False
                 for n in list(dns_cache):
