@@ -1,25 +1,38 @@
 {
   "ietf-mud:mud": {
     "mud-version": 1,
-    "mud-url": "http://10.211.83.196:5000/mud/temperature_sensor.json",
-    "last-update": "2026-07-23T10:00:00+00:00",
+    "mud-url": "http://10.42.0.1:5000/mud/temperature_sensor.json",
+    "last-update": "2026-10-08T13:45:00+05:30",
     "cache-validity": 48,
     "is-supported": true,
-    "systeminfo": "DHT11 Temperature and Humidity Sensor - publishes readings every 10 seconds via MQTT",
+    "extensions": [
+      "mqtt-topic-acl"
+    ],
+    "systeminfo": "DHT11 Temperature and Humidity Sensor - publishes readings every 10 seconds via MQTT to the broker on the gateway",
     "from-device-policy": {
       "access-lists": {
         "access-list": [
-          { "name": "allow-mqtt-outbound" },
-          { "name": "allow-https-updates" },
-          { "name": "deny-all-other" }
+          {
+            "name": "allow-mqtt-outbound"
+          },
+          {
+            "name": "allow-https-updates"
+          },
+          {
+            "name": "deny-all-other"
+          }
         ]
       }
     },
     "to-device-policy": {
       "access-lists": {
         "access-list": [
-          { "name": "allow-mqtt-inbound" },
-          { "name": "deny-all-inbound" }
+          {
+            "name": "allow-mqtt-inbound"
+          },
+          {
+            "name": "deny-all-inbound"
+          }
         ]
       }
     },
@@ -28,60 +41,104 @@
         {
           "name": "allow-mqtt-outbound",
           "aces": {
-            "ace": [{
-              "name": "mqtt-rule",
-              "matches": {
-                "ipv4": { "dst-address": "10.211.83.196/32" },
-                "tcp":  { "dst-port": { "port": 1883 } }
-              },
-              "actions": { "forwarding": "accept" }
-            }]
+            "ace": [
+              {
+                "name": "mqtt-rule",
+                "matches": {
+                  "ipv4": {
+                    "dst-address": "127.0.0.1/32"
+                  },
+                  "tcp": {
+                    "dst-port": {
+                      "port": 1883
+                    }
+                  }
+                },
+                "actions": {
+                  "forwarding": "accept"
+                }
+              }
+            ]
           }
         },
         {
           "name": "allow-https-updates",
           "aces": {
-            "ace": [{
-              "name": "https-rule",
-              "matches": {
-                "tcp": { "dst-port": { "port": 443 } }
-              },
-              "actions": { "forwarding": "accept" }
-            }]
+            "ace": [
+              {
+                "name": "https-rule",
+                "matches": {
+                  "tcp": {
+                    "dst-port": {
+                      "port": 443
+                    }
+                  }
+                },
+                "actions": {
+                  "forwarding": "accept"
+                }
+              }
+            ]
           }
         },
         {
           "name": "deny-all-other",
           "aces": {
-            "ace": [{
-              "name": "deny-rule",
-              "matches": {},
-              "actions": { "forwarding": "drop" }
-            }]
+            "ace": [
+              {
+                "name": "deny-rule",
+                "matches": {},
+                "actions": {
+                  "forwarding": "drop"
+                }
+              }
+            ]
           }
         },
         {
           "name": "allow-mqtt-inbound",
           "aces": {
-            "ace": [{
-              "name": "mqtt-inbound-rule",
-              "matches": {
-                "tcp": { "dst-port": { "port": 1883 } }
-              },
-              "actions": { "forwarding": "accept" }
-            }]
+            "ace": [
+              {
+                "name": "mqtt-inbound-rule",
+                "matches": {
+                  "tcp": {
+                    "dst-port": {
+                      "port": 1883
+                    }
+                  }
+                },
+                "actions": {
+                  "forwarding": "accept"
+                }
+              }
+            ]
           }
         },
         {
           "name": "deny-all-inbound",
           "aces": {
-            "ace": [{
-              "name": "deny-inbound-rule",
-              "matches": {},
-              "actions": { "forwarding": "drop" }
-            }]
+            "ace": [
+              {
+                "name": "deny-inbound-rule",
+                "matches": {},
+                "actions": {
+                  "forwarding": "drop"
+                }
+              }
+            ]
           }
         }
+      ]
+    },
+    "mqtt-topic-acl:policy": {
+      "username": "dht11-sensor",
+      "client-id": "DHT11-Sensor-v2",
+      "publish": [
+        "sensors/temperature"
+      ],
+      "subscribe": [
+        "sensors/temperature/config"
       ]
     }
   }
