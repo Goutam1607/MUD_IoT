@@ -1,0 +1,11 @@
+id,kind,topic,expected,result,reached_trials,trials,correct,description
+M01,publish,sensors/temperature,PASS,REACHED,3,3,True,sensor publishes its own reading
+M02,subscribe,sensors/temperature/config,PASS,REACHED,3,3,True,sensor reads its own config topic
+M03,publish,home/door/unlock,BLOCK,BLOCKED,0,3,True,spoofed command: unlock the door
+M04,publish,sensors/humidity,BLOCK,BLOCKED,0,3,True,inject fake data as another device
+M05,publish,cameras/cam1/control,BLOCK,BLOCKED,0,3,True,tamper with the camera's control topic
+M06,subscribe,#,BLOCK,BLOCKED,0,3,True,spy on every topic (#)
+M07,subscribe,cameras/cam1/control,BLOCK,BLOCKED,0,3,True,spy on another device's data
+M08,connect,,BLOCK,BLOCKED,0,3,True,anonymous client (no username)
+M09,connect,,BLOCK,BLOCKED,0,3,True,sensor username with WRONG password
+M10,connect,,BLOCK,BLOCKED,0,3,True,unknown device 'rogue' with a guessed password
