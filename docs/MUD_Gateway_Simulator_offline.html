@@ -1,0 +1,835 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0}</style>
+<title>MUD Gateway Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one idea per page, like slides. Big animated stage + side card, caption bar underneath, page dots on top. Lexend chosen for readability by non-experts. */
+:root{
+  --bg:#F3F5F4; --card:#FFFFFF; --ink:#18222B; --muted:#5D6A72; --line:#D3DCD9;
+  --brand:#0F766E; --brand-soft:#D7EFEB; --amber:#C77700; --amber-soft:#FCEDD3;
+  --ok:#23894A; --ok-soft:#DCF2E3; --bad:#D23A3A; --bad-soft:#FBE0DF; --wire:#B9C5C2;
+  --sans:"Lexend", "Segoe UI", system-ui, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101716; --card:#18211F; --ink:#E6EEEC; --muted:#93A4A0; --line:#2B3A37;
+  --brand:#3CC4B6; --brand-soft:#123A36; --amber:#F2A93B; --amber-soft:#3B2C12;
+  --ok:#4CC57A; --ok-soft:#14351F; --bad:#FF6B6B; --bad-soft:#3E1A1A; --wire:#3A4B47; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101716; --card:#18211F; --ink:#E6EEEC; --muted:#93A4A0; --line:#2B3A37;
+  --brand:#3CC4B6; --brand-soft:#123A36; --amber:#F2A93B; --amber-soft:#3B2C12;
+  --ok:#4CC57A; --ok-soft:#14351F; --bad:#FF6B6B; --bad-soft:#3E1A1A; --wire:#3A4B47; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.5}
+.app{max-width:1240px;margin:0 auto;padding-inline:16px;padding-block:12px 18px;display:grid;gap:12px;min-height:100%;grid-template-rows:auto auto 1fr auto}
+
+/* top bar */
+.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px}
+.brand i{width:12px;height:12px;border-radius:3px;background:var(--brand);display:inline-block}
+.dots{display:flex;gap:6px;flex-wrap:wrap;flex:1;justify-content:center}
+.dot{width:30px;height:8px;border-radius:4px;border:0;background:var(--line);cursor:pointer;padding:0}
+.dot.done{background:var(--brand-soft)}
+.dot.on{background:var(--brand)}
+.dot:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.pageno{font-family:var(--mono);font-size:13px;color:var(--muted)}
+.iconbtn{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:6px;padding:5px 10px;cursor:pointer}
+
+/* headline */
+.head{display:grid;gap:4px}
+.kicker{font-size:13px;font-weight:600;color:var(--brand);letter-spacing:.6px;text-transform:uppercase}
+h1{margin:0;font-size:clamp(24px,3.4vw,38px);font-weight:700;line-height:1.15;text-wrap:balance}
+.lead{margin:0;font-size:clamp(15px,1.6vw,18px);color:var(--muted);max-width:75ch}
+
+/* body */
+.body{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:14px;align-items:start}
+.body.full{grid-template-columns:minmax(0,1fr)}
+@media (max-width:980px){.body{grid-template-columns:minmax(0,1fr)}}
+.stagewrap{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;min-width:0;display:grid}
+.stagebox{overflow-x:auto}
+svg#stage{display:block;width:100%;min-width:560px;height:auto}
+.caption{border-top:1px solid var(--line);padding:14px 18px;min-height:76px;display:flex;gap:12px;align-items:center}
+.caption .cicon{flex:0 0 34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--brand-soft);color:var(--brand);font-weight:700}
+.caption .cicon.ok{background:var(--ok-soft);color:var(--ok)} .caption .cicon.bad{background:var(--bad-soft);color:var(--bad)}
+.caption p{margin:0;font-size:clamp(15px,1.7vw,19px);line-height:1.45}
+.caption b{font-weight:600}
+.stagebar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:10px 14px;border-top:1px solid var(--line);background:var(--bg)}
+.btn{font:inherit;font-weight:600;font-size:14.5px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:8px 16px;cursor:pointer}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{font:inherit;font-size:14px;font-weight:600;border:0;background:var(--card);color:var(--muted);padding:8px 14px;cursor:pointer}
+.seg button[aria-pressed="true"].before{background:var(--bad);color:#fff}
+.seg button[aria-pressed="true"].after{background:var(--ok);color:#fff}
+.grow{flex:1}
+label.spd{font-size:13px;color:var(--muted);display:inline-flex;gap:6px;align-items:center}
+select,input{font:inherit;font-size:14px;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+
+/* side card */
+.side{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:10px;min-width:0}
+.side h2{margin:0;font-size:17px;font-weight:700;display:flex;align-items:center;gap:8px}
+.side .note{font-size:13px;color:var(--muted);margin:0}
+.rb{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.rb li{border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:grid;grid-template-columns:22px minmax(0,1fr);gap:8px;align-items:start;font-size:14px;line-height:1.35;transition:background .25s,border-color .25s}
+.rb li .n{font-family:var(--mono);font-size:12px;color:var(--muted);padding-top:1px}
+.rb li small{display:block;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.rb li.deny{border-style:dashed}
+.rb li.hl-ok{background:var(--ok-soft);border-color:var(--ok)}
+.rb li.hl-bad{background:var(--bad-soft);border-color:var(--bad)}
+.rb li.dim{opacity:.35}
+.seal{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;padding:6px 10px;border-radius:8px;background:var(--bg);color:var(--muted)}
+.seal.ok{background:var(--ok-soft);color:var(--ok)} .seal.bad{background:var(--bad-soft);color:var(--bad)}
+.tally{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tally div{border-radius:8px;padding:8px 10px;background:var(--bg);display:grid}
+.tally b{font-size:24px;font-variant-numeric:tabular-nums;line-height:1.1}
+.tally .g b{color:var(--ok)} .tally .r b{color:var(--bad)}
+.tally span{font-size:12px;color:var(--muted)}
+.legend{display:grid;gap:8px;margin:0;padding:0;list-style:none;font-size:14px}
+.legend li{display:grid;grid-template-columns:30px minmax(0,1fr);gap:8px;align-items:start}
+.legend svg{width:30px;height:30px}
+.keyfacts{display:grid;gap:8px}
+.keyfacts div{border-left:3px solid var(--brand);padding:2px 0 2px 10px;font-size:14px}
+
+details.tech{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+details.tech summary{cursor:pointer;font-weight:600;font-size:14px;color:var(--muted)}
+details.tech div{font-size:13.5px;margin-top:8px;display:grid;gap:6px}
+details.tech code{font-family:var(--mono);font-size:12.5px;background:var(--bg);padding:1px 5px;border-radius:4px;word-break:break-word}
+
+/* bottom nav */
+.nav{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.nav .hint{font-size:13px;color:var(--muted)}
+
+/* results & summary pages */
+.big{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;padding:18px}
+.big div{border-radius:12px;background:var(--bg);padding:14px 16px;display:grid;gap:4px}
+.big b{font-size:clamp(28px,3.4vw,40px);font-weight:700;color:var(--brand);font-variant-numeric:tabular-nums;line-height:1.05}
+.big span{font-size:15px}
+.big small{font-size:12.5px;color:var(--muted)}
+.lab{display:grid;gap:10px}
+.lab label{display:grid;gap:4px;font-size:13px;color:var(--muted)}
+.lab select,.lab input{width:100%}
+.verdict{border-radius:8px;padding:10px 12px;background:var(--bg);font-size:14.5px;min-height:46px}
+.verdict.ok{background:var(--ok-soft)} .verdict.bad{background:var(--bad-soft)}
+
+/* svg */
+.lbl{fill:var(--ink);font-family:var(--sans);font-size:15px;font-weight:600}
+.sub{fill:var(--muted);font-family:var(--sans);font-size:12.5px}
+.wire{stroke:var(--wire);stroke-width:3;fill:none;stroke-linecap:round}
+.wire.dash{stroke-dasharray:6 7}
+.pk text{font-family:var(--sans);font-size:13px;font-weight:600;paint-order:stroke;stroke:var(--card);stroke-width:4px;fill:var(--ink)}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+
+<div class="app">
+  <div class="top">
+    <div class="brand"><i></i>MUD Gateway · how it protects smart devices</div>
+    <nav class="dots" id="dots" aria-label="Pages"></nav>
+    <span class="pageno" id="pageno"></span>
+    <button class="iconbtn" id="fsBtn" type="button">Full screen</button>
+  </div>
+
+  <header class="head">
+    <div class="kicker" id="kicker"></div>
+    <h1 id="title"></h1>
+    <p class="lead" id="lead"></p>
+  </header>
+
+  <main class="body" id="body">
+    <section class="stagewrap" id="stagewrap">
+      <div class="stagebox" id="stagebox">
+        <svg id="stage" viewBox="0 0 960 430" role="img" aria-label="Animated diagram"></svg>
+      </div>
+      <div id="bigbox" hidden></div>
+      <div class="caption" aria-live="polite"><div class="cicon" id="cicon">i</div><p id="cap"></p></div>
+      <div class="stagebar" id="stagebar">
+        <button class="btn primary" id="playBtn" type="button">▶ Play</button>
+        <div class="seg" id="seg" hidden>
+          <button type="button" class="before" id="segBefore" aria-pressed="false">Without our fix</button>
+          <button type="button" class="after" id="segAfter" aria-pressed="true">With our fix</button>
+        </div>
+        <span class="grow"></span>
+        <label class="spd" for="speed">Speed
+          <select id="speed"><option value="0.6">Slow</option><option value="1" selected>Normal</option><option value="1.6">Fast</option></select>
+        </label>
+      </div>
+    </section>
+    <aside class="side" id="side"></aside>
+  </main>
+
+  <div class="nav">
+    <button class="btn" id="prevBtn" type="button">← Back</button>
+    <details class="tech" id="tech"><summary>For the examiner: technical details</summary><div id="techBody"></div></details>
+    <button class="btn primary" id="nextBtn" type="button">Next →</button>
+  </div>
+</div>
+
+<script>
+(() => {
+"use strict";
+const $ = id => document.getElementById(id);
+const NS = "http://www.w3.org/2000/svg";
+const cv = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+/* ================= icons (drawn around 0,0, about 60px) ================= */
+const ICON = {
+  camera: c => `<rect x="-26" y="-18" width="44" height="34" rx="8" fill="var(--card)" stroke="${c}" stroke-width="3"/><circle cx="-4" cy="-1" r="10" fill="none" stroke="${c}" stroke-width="3"/><circle cx="-4" cy="-1" r="4" fill="${c}"/><path d="M18,-8 l12,-7 v28 l-12,-7z" fill="${c}"/>`,
+  sensor: c => `<rect x="-8" y="-28" width="16" height="40" rx="8" fill="var(--card)" stroke="${c}" stroke-width="3"/><circle cx="0" cy="18" r="11" fill="${c}"/><rect x="-3" y="-8" width="6" height="26" fill="${c}"/>`,
+  laptop: c => `<rect x="-26" y="-20" width="52" height="32" rx="4" fill="var(--card)" stroke="${c}" stroke-width="3"/><path d="M-34,18 h68" stroke="${c}" stroke-width="5" stroke-linecap="round"/>`,
+  lock: c => `<rect x="-17" y="-4" width="34" height="28" rx="5" fill="${c}"/><path class="shackle" d="M-10,-4 v-10 a10,10 0 0 1 20,0 v10" fill="none" stroke="${c}" stroke-width="5"/><circle cx="0" cy="9" r="4" fill="var(--card)"/>`,
+  guard: c => `<path d="M0,-38 L32,-26 V2 C32,22 16,34 0,40 C-16,34 -32,22 -32,2 V-26 Z" fill="var(--brand-soft)" stroke="${c}" stroke-width="3.5"/><path d="M-12,2 l9,9 l17,-19" fill="none" stroke="${c}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>`,
+  router: c => `<rect x="-32" y="-10" width="64" height="26" rx="6" fill="var(--card)" stroke="${c}" stroke-width="3"/><path d="M-18,-10 l-6,-18 M18,-10 l6,-18" stroke="${c}" stroke-width="3" stroke-linecap="round"/><circle cx="-14" cy="3" r="3" fill="${c}"/><circle cx="-2" cy="3" r="3" fill="${c}"/>`,
+  cloud: c => `<path d="M-30,14 a14,14 0 0 1 2,-28 a20,20 0 0 1 36,-6 a15,15 0 0 1 20,20 a12,12 0 0 1 -4,14 z" fill="var(--card)" stroke="${c}" stroke-width="3"/>`,
+  phone: c => `<rect x="-16" y="-28" width="32" height="56" rx="6" fill="var(--card)" stroke="${c}" stroke-width="3"/><circle cx="0" cy="20" r="3" fill="${c}"/>`,
+  hacker: c => `<circle cx="0" cy="-10" r="16" fill="${c}"/><path d="M-28,30 a28,22 0 0 1 56,0 z" fill="${c}"/><rect x="-12" y="-15" width="24" height="7" rx="3" fill="var(--card)"/>`,
+  factory: c => `<path d="M-30,26 V-4 l16,-10 v10 l16,-10 v10 l16,-10 V-24 h10 V26 z" fill="var(--card)" stroke="${c}" stroke-width="3" stroke-linejoin="round"/><rect x="-20" y="8" width="8" height="10" fill="${c}"/><rect x="-4" y="8" width="8" height="10" fill="${c}"/>`,
+  book: c => `<rect x="-22" y="-28" width="44" height="56" rx="4" fill="var(--card)" stroke="${c}" stroke-width="3"/><path d="M-12,-14 h24 M-12,-4 h24 M-12,6 h16" stroke="${c}" stroke-width="3" stroke-linecap="round"/><circle cx="12" cy="20" r="9" fill="var(--amber)"/>`,
+  board: c => `<rect x="-34" y="-28" width="68" height="50" rx="5" fill="var(--card)" stroke="${c}" stroke-width="3"/><rect x="-26" y="-20" width="22" height="14" fill="var(--amber-soft)" stroke="${c}" stroke-width="1.5"/><rect x="2" y="-18" width="24" height="12" fill="var(--brand-soft)" stroke="${c}" stroke-width="1.5"/><rect x="-22" y="0" width="26" height="14" fill="var(--brand-soft)" stroke="${c}" stroke-width="1.5"/><path d="M-20,22 v10 M20,22 v10" stroke="${c}" stroke-width="3"/>`,
+  people: c => `<circle cx="-12" cy="-10" r="9" fill="${c}"/><circle cx="12" cy="-10" r="9" fill="${c}"/><path d="M-28,22 a16,16 0 0 1 32,0z M-4,22 a16,16 0 0 1 32,0z" fill="${c}"/>`,
+  antenna: c => `<path d="M0,-6 V30" stroke="${c}" stroke-width="4"/><path d="M-12,-14 a16,16 0 0 1 24,0 M-20,-22 a28,28 0 0 1 40,0" fill="none" stroke="${c}" stroke-width="3" stroke-linecap="round"/><circle cx="0" cy="-6" r="5" fill="${c}"/>`,
+};
+
+/* ================= stage engine ================= */
+const S = {page:0, run:0, speed:1, mode:"after", playing:false};
+const ABORT = Symbol("abort");
+const N = {};   // node positions on current page
+function clear(){ $("stage").innerHTML = '<g id="L-bg"></g><g id="L-wire"></g>'; for (const k in N) delete N[k]; }
+function zone(x, y, w, h, label){
+  const g = $("L-bg");
+  g.insertAdjacentHTML("beforeend", `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="16" fill="var(--bg)"/><text class="sub" x="${x+w/2}" y="${y+h-14}" text-anchor="middle">${label}</text>`);
+}
+function el(tag, attrs, html){ const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (html) e.innerHTML = html; $("stage").appendChild(e); return e; }
+function node(id, x, y, icon, label, sub, color){
+  N[id] = {x, y};
+  const g = el("g", {id:"n-"+id, transform:`translate(${x},${y})`});
+  g.innerHTML = `<g class="ic">${ICON[icon](color || "var(--ink)")}</g>
+    <text class="lbl" x="0" y="62" text-anchor="middle">${label}</text>
+    ${sub ? `<text class="sub" x="0" y="80" text-anchor="middle">${sub}</text>` : ""}
+    <g class="tag"></g>`;
+  return g;
+}
+function recolor(id, color){ const g = $("n-"+id); if (g) g.querySelector(".ic").innerHTML = ICON[g.dataset.icon || guessIcon(id)](color); }
+function guessIcon(id){ return ({cam:"camera", camx:"camera", sensor:"sensor", laptop:"laptop", lock:"lock", guard:"guard", router:"router", cloud:"cloud", phone:"phone", hacker:"hacker", factory:"factory", book:"book", board:"board", people:"people", ant:"antenna", hot:"phone"})[id] || "cloud"; }
+function tag(id, text, kind){
+  const g = $("n-"+id); if (!g) return;
+  const t = g.querySelector(".tag");
+  if (!text){ t.innerHTML = ""; return; }
+  const col = kind==="bad" ? cv("--bad") : kind==="ok" ? cv("--ok") : cv("--brand");
+  const soft = kind==="bad" ? cv("--bad-soft") : kind==="ok" ? cv("--ok-soft") : cv("--brand-soft");
+  const w = text.length * 7.6 + 22;
+  t.innerHTML = `<rect x="${-w/2}" y="-66" width="${w}" height="24" rx="12" fill="${soft}" stroke="${col}" stroke-width="1.5"/><text x="0" y="-49" text-anchor="middle" style="font:600 13px var(--sans);fill:${col}">${text}</text>`;
+}
+function wire(a, b, dashed, via){
+  const pts = [N[a], ...(via||[]), N[b]];
+  const d = "M" + pts.map(p=>`${p.x},${p.y}`).join(" L");
+  const w = document.createElementNS(NS, "path"); w.setAttribute("class", "wire" + (dashed?" dash":"")); w.setAttribute("d", d);
+  $("L-wire").appendChild(w);
+  return w;
+}
+function sleep(ms){
+  const id = S.run;
+  return new Promise((res, rej) => {
+    let left = ms / S.speed, last = performance.now();
+    (function tick(now){ if (id !== S.run) return rej(ABORT); left -= now - last; last = now; left <= 0 ? res() : requestAnimationFrame(tick); })(last);
+  });
+}
+function pathPts(list){ return list.map(p => typeof p === "string" ? [N[p].x, N[p].y] : p); }
+function packet(list, label, color, opts={}){
+  const pts = pathPts(list), id = S.run;
+  const g = el("g", {class:"pk"});
+  const shape = opts.letter
+    ? `<rect x="-14" y="-10" width="28" height="20" rx="3" fill="${color}"/><path d="M-14,-10 l14,10 l14,-10" fill="none" stroke="var(--card)" stroke-width="2"/>`
+    : `<circle r="11" fill="${color}" stroke="var(--card)" stroke-width="3"/>`;
+  g.innerHTML = shape + (label ? `<text x="16" y="-14">${label}</text>` : "");
+  let L = 0; const seg = [];
+  for (let i=1;i<pts.length;i++){ const d = Math.hypot(pts[i][0]-pts[i-1][0], pts[i][1]-pts[i-1][1]); seg.push(d); L += d; }
+  const dur = (opts.dur || Math.max(700, L * 2.6));
+  return new Promise((res, rej) => {
+    let t = 0, last = performance.now();
+    (function tick(now){
+      if (id !== S.run){ g.remove(); return rej(ABORT); }
+      t += (now-last) * S.speed; last = now;
+      let d = Math.min(1, t/dur) * L, i = 0;
+      while (i < seg.length-1 && d > seg[i]){ d -= seg[i]; i++; }
+      const r = seg[i] ? d/seg[i] : 0;
+      const x = pts[i][0] + (pts[i+1][0]-pts[i][0])*r, y = pts[i][1] + (pts[i+1][1]-pts[i][1])*r;
+      g.setAttribute("transform", `translate(${x},${y})`);
+      if (t >= dur){ if (!opts.keep) g.remove(); res(g); } else requestAnimationFrame(tick);
+    })(last);
+  });
+}
+function mark(x, y, ok, text){
+  const c = ok ? cv("--ok") : cv("--bad"), soft = ok ? cv("--ok-soft") : cv("--bad-soft");
+  const g = el("g", {transform:`translate(${x},${y})`});
+  g.innerHTML = `<circle r="20" fill="${soft}" stroke="${c}" stroke-width="3.5"/>` +
+    (ok ? `<path d="M-9,0 l6,7 l12,-14" stroke="${c}" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`
+        : `<path d="M-8,-8 l16,16 M8,-8 l-16,16" stroke="${c}" stroke-width="4.5" stroke-linecap="round"/>`) +
+    (text ? `<text y="40" text-anchor="middle" style="font:700 14px var(--sans);fill:${c};paint-order:stroke;stroke:var(--card);stroke-width:4px">${text}</text>` : "");
+  const id = S.run;
+  setTimeout(() => { if (id === S.run) g.remove(); }, 1700 / S.speed);
+  return g;
+}
+function say(html, kind){
+  $("cap").innerHTML = html;
+  const ic = $("cicon"); ic.className = "cicon" + (kind ? " " + kind : "");
+  ic.textContent = kind==="ok" ? "✓" : kind==="bad" ? "✕" : "i";
+}
+
+/* ================= side card helpers ================= */
+const RULES = [
+  {t:"Look up web addresses at Google DNS", s:"UDP 53 → 8.8.8.8", proto:"udp", port:53, dst:["8.8.8.8"]},
+  {t:"Stay connected to the CP Plus cloud", s:"TCP 8886 → m6-cube.cppluscloud.com", proto:"tcp", port:8886, dst:["13.203.132.148","13.203.147.54"]},
+  {t:"Short calls to the CP Plus app server", s:"TCP 443 → a6-cube.cppluscloud.com", proto:"tcp", port:443, dst:["3.111.59.214"]},
+  {t:"Find its own public address (for live video)", s:"UDP 3478 → any (STUN)", proto:"udp", port:3478},
+  {t:"Send live video through the relay server", s:"TCP 1443 → any (relay)", proto:"tcp", port:1443},
+];
+function rulebook(opts={}){
+  const n = opts.count ?? RULES.length;
+  const items = RULES.slice(0, n).map((r,i)=>`<li id="rb${i}"><span class="n">${i+1}</span><span>${r.t}<small>${r.s}</small></span></li>`).join("");
+  const deny = (opts.count===undefined || opts.count>=RULES.length) ? `<li class="deny" id="rbx"><span class="n">✕</span><span><b>Anything else: not allowed.</b> Block it and write it in the log.<small>default deny · LOG + DROP</small></span></li>` : "";
+  $("side").innerHTML = `<h2>📘 The camera's rulebook</h2>
+    <p class="note">Written by the manufacturer. The guard reads it from top to bottom.</p>
+    <div class="seal" id="seal">${opts.seal || "Official seal: not checked yet"}</div>
+    <ul class="rb">${items}${deny}</ul>
+    ${opts.tally ? `<div class="tally"><div class="g"><b id="tOk">0</b><span>allowed</span></div><div class="r"><b id="tBad">0</b><span>blocked</span></div></div>` : ""}`;
+  if (opts.sealState) seal(opts.sealState);
+}
+function seal(state){
+  const s = $("seal"); if (!s) return;
+  s.className = "seal " + (state||"");
+  s.textContent = state==="ok" ? "✓ Official seal checked: genuine" : state==="bad" ? "✕ Seal is fake: rulebook rejected" : "Official seal: not checked yet";
+}
+function hl(i, kind){
+  document.querySelectorAll(".rb li").forEach(li => li.classList.remove("hl-ok","hl-bad"));
+  if (i === null) return;
+  const li = i === "x" ? $("rbx") : $("rb"+i); if (li) li.classList.add(kind==="bad" ? "hl-bad" : "hl-ok");
+}
+function bump(kind){ const e = $(kind==="ok"?"tOk":"tBad"); if (e) e.textContent = +e.textContent + 1; }
+function match(proto, port, ip){
+  for (let i=0;i<RULES.length;i++){ const r = RULES[i]; if (r.proto===proto && r.port===port && (!r.dst || r.dst.includes(ip))) return i; }
+  return -1;
+}
+function legend(rows, title="Who's who"){
+  $("side").innerHTML = `<h2>${title}</h2><ul class="legend">${rows.map(([ic,col,t])=>`<li><svg viewBox="-40 -40 80 80">${ICON[ic](col)}</svg><span>${t}</span></li>`).join("")}</ul>`;
+}
+function facts(title, list){
+  $("side").innerHTML = `<h2>${title}</h2><div class="keyfacts">${list.map(t=>`<div>${t}</div>`).join("")}</div>`;
+}
+
+/* ================= common layout for "devices → guard → internet" ================= */
+function scene(opts={}){
+  clear();
+  const brand = cv("--brand");
+  zone(20, 20, 250, 390, "Home WiFi (MUD_Gateway)");
+  zone(690, 20, 250, 390, "Internet");
+  node("guard", 480, 205, "guard", "The guard", "Raspberry Pi gateway", brand);
+  $("n-guard").dataset.icon = "guard";
+  return brand;
+}
+
+/* ================= pages ================= */
+const PAGES = [
+{ kicker:"Welcome", title:"A Raspberry Pi gateway that keeps smart devices in line",
+  lead:"Smart cameras and sensors can be hacked. Our project puts a small 'guard' between them and the internet. The guard only lets each device do what its maker says it needs.",
+  caption:"Press <b>Next →</b> (or the → key) to go page by page. On each page press <b>▶ Play</b> to watch the animation.",
+  build(){ scene();
+    node("cam", 140, 140, "camera", "Smart camera", "", cv("--amber")); $("n-cam").dataset.icon="camera";
+    node("sensor", 140, 300, "sensor", "Temperature sensor", "", cv("--amber"));
+    node("cloud", 815, 205, "cloud", "Internet", "", cv("--muted"));
+    wire("cam","guard"); wire("sensor","guard"); wire("guard","cloud");
+    legend([["camera",cv("--amber"),"<b>Smart devices.</b> A real CP Plus WiFi camera and a real DHT11 temperature sensor."],
+            ["guard",cv("--brand"),"<b>The guard.</b> A Raspberry Pi 3B+ that every message must pass through."],
+            ["book",cv("--brand"),"<b>The rulebook.</b> A file from the manufacturer listing what the device may do."],
+            ["cloud",cv("--muted"),"<b>The internet.</b> Where the device's cloud servers live, and also where attackers are."]], "In this demo");
+  },
+  async play(){
+    for (let i=0;i<2;i++){
+      say("Every message from a device goes <b>through the guard</b> before it reaches the internet.");
+      await packet(["cam","guard"], "", cv("--amber")); mark(N.guard.x, N.guard.y-60, true);
+      await packet(["guard","cloud"], "", cv("--ok"));
+      await packet(["sensor","guard"], "", cv("--amber")); mark(N.guard.x, N.guard.y-60, true);
+    }
+    say("That's the whole idea. The next pages show <b>how</b> the guard decides.", "ok");
+  },
+  tech:["Project: MUD-based IoT security (IETF <code>RFC 8520</code>) on a Raspberry Pi 3B+ running Raspberry Pi OS Lite.",
+        "Gateway hardware: Raspberry Pi 3B+, 16 GB microSD card, TP-Link TL-WN725N USB WiFi adapter (parts list in docs/hardware_bom.csv)."]
+},
+{ kicker:"The problem", title:"Smart devices are easy to hack",
+  lead:"They often have weak passwords and old software. Once hacked, a device can attack others or leak your private video. A normal home router can't tell, because it doesn't know what a camera is supposed to do.",
+  caption:"Press <b>▶ Play</b> to see what happens with a normal router.",
+  build(){ clear();
+    zone(20, 20, 250, 390, "Your home");
+    zone(690, 20, 250, 390, "Internet");
+    node("cam", 140, 200, "camera", "Smart camera", "", cv("--amber")); $("n-cam").dataset.icon="camera";
+    node("router", 480, 200, "router", "Normal router", "lets everything through", cv("--muted"));
+    node("hacker", 815, 110, "hacker", "Attacker", "", cv("--bad"));
+    node("people", 815, 285, "people", "Other people's devices", "", cv("--muted"));
+    wire("cam","router"); wire("router","hacker"); wire("router","people");
+    legend([["router",cv("--muted"),"A normal router forwards <b>everything</b>. It has no list of what is normal."],
+            ["hacker",cv("--bad"),"The attacker scans the internet for weak cameras."],
+            ["people",cv("--muted"),"Hacked cameras are used to attack others (botnets such as <b>Mirai</b> did this to hundreds of thousands of devices)."]], "Why this is a problem");
+  },
+  async play(){
+    tag("cam", null);
+    say("The attacker logs into the camera using a weak or default password…");
+    await packet(["hacker","router","cam"], "break in", cv("--bad"));
+    recolor("cam", cv("--bad")); tag("cam","hacked","bad");
+    say("Now the camera obeys the attacker. It starts <b>attacking other devices</b>…", "bad");
+    for (let i=0;i<3;i++) await packet(["cam","router","people"], i===0?"attack":"", cv("--bad"), {dur:900});
+    say("…and <b>sends your private video</b> to the attacker. The router allowed all of it.", "bad");
+    await packet(["cam","router","hacker"], "your video", cv("--bad"));
+    say("The router never complained, because it has <b>no idea what a camera should be doing</b>. That's the gap our project fills.", "bad");
+  },
+  tech:["Typical IoT weaknesses: default credentials, exposed Telnet (port 23), unpatched firmware.",
+        "Mirai (2016) built a botnet from cameras and DVRs by trying default Telnet passwords, then used them for large DDoS attacks."]
+},
+{ kicker:"The idea", title:"The maker writes a rulebook for each device",
+  lead:"The company that makes the camera knows exactly what it needs to talk to. So it publishes a short rulebook, sealed with its official digital signature. The guard follows that rulebook and blocks everything else.",
+  caption:"Press <b>▶ Play</b> to see the rulebook travel from the manufacturer to the guard.",
+  build(){ scene();
+    node("factory", 815, 205, "factory", "Manufacturer", "CP Plus", cv("--muted"));
+    node("cam", 140, 205, "camera", "Smart camera", "", cv("--amber"));
+    wire("factory","guard"); wire("cam","guard");
+    rulebook();
+  },
+  async play(){
+    seal(null); hl(null);
+    say("The manufacturer writes down what the camera needs, and signs it with a <b>secret key</b> only it has.");
+    await sleep(900);
+    await packet(["factory","guard"], "rulebook + seal", cv("--brand"), {letter:true});
+    say("The guard checks the <b>seal</b> with the manufacturer's public key. If anyone changed even one letter, the seal would fail.");
+    await sleep(1100); seal("ok"); mark(N.guard.x, N.guard.y-60, true, "seal OK");
+    say("The seal is genuine, so the guard accepts the rulebook. Lines 1 to 5 are <b>allowed</b>; anything else is <b>blocked</b>.", "ok");
+    for (let i=0;i<RULES.length;i++){ hl(i,"ok"); await sleep(450); }
+    hl("x","bad"); await sleep(900); hl(null);
+    say("This rulebook is called a <b>MUD file</b> (Manufacturer Usage Description). It's an official internet standard: <b>RFC 8520</b>.", "ok");
+  },
+  tech:["MUD file = JSON with access lists (RFC 8519 ACL model): <code>from-device-policy</code> and <code>to-device-policy</code>.",
+        "Our seal: RSA-2048 signature with PSS padding and SHA-256, sent as header <code>X-MUD-Signature</code>. RFC 8520 itself specifies a detached CMS signature file; ours is a simplified transport of the same idea.",
+        "We wrote the camera's rules ourselves from its real traffic (tcpdump + conntrack), because this camera model doesn't publish a MUD file."]
+},
+{ kicker:"Our setup", title:"What we actually built",
+  lead:"Real devices, a real Raspberry Pi, a real internet connection. Press Play to meet each part.",
+  caption:"Press <b>▶ Play</b> for a guided tour of the setup.",
+  build(){ const b = scene();
+    node("cam", 140, 110, "camera", "Smart camera", "10.42.0.17", cv("--amber")); $("n-cam").dataset.icon="camera";
+    node("laptop", 140, 300, "laptop", "Laptop", "our tester / attacker", cv("--muted"));
+    node("hot", 640, 330, "phone", "Phone hotspot", "internet link", cv("--muted"));
+    node("cloud", 815, 120, "cloud", "Camera's cloud", "CP Plus servers", cv("--muted"));
+    node("phone", 815, 280, "phone", "Your phone app", "live view", cv("--muted"));
+    wire("cam","guard"); wire("laptop","guard"); wire("guard","hot"); wire("hot","cloud", false); wire("hot","phone");
+    facts("Inside the guard (the Pi)", [
+      "<b>Rulebook reader:</b> fetches each device's rulebook and checks the seal.",
+      "<b>Gatekeeper:</b> Linux firewall that lets through only what the rulebook allows.",
+      "<b>Message board:</b> where the temperature sensor posts its readings (MQTT).",
+      "<b>Temperature sensor:</b> a DHT11 wired straight to the Pi.",
+      "<b>Starts by itself:</b> after a power cut it is protecting again within seconds."]);
+  },
+  async play(){
+    const steps = [["cam","This is the <b>CP Plus smart camera</b>. It joins the Pi's own WiFi network, called MUD_Gateway."],
+      ["guard","This is <b>the guard</b>, a Raspberry Pi 3B+. It creates the WiFi and is the only way out to the internet."],
+      ["hot","The Pi reaches the internet through a <b>phone hotspot</b>, using a second, plug-in WiFi adapter."],
+      ["cloud","The camera needs its <b>cloud servers</b> to work: for control, for its app and for video."],
+      ["phone","You watch live video in the <b>phone app</b>, which gets the video through the cloud."],
+      ["laptop","Our <b>laptop</b> plays the attacker in the tests, sitting on the same WiFi as the camera."]];
+    for (const [id, text] of steps){ say(text); tag(id, "here", "info"); await sleep(2200); tag(id, null); }
+    say("Everything you'll see next happened on this real setup. The numbers come from our tests.", "ok");
+  },
+  tech:["wlan0 (built-in WiFi) = access point MUD_Gateway, 10.42.0.1/24, DHCP + NAT. wlan1 (TP-Link TL-WN725N) = client of the phone hotspot.",
+        "Software: Flask MUD file server (port 5000), <code>gateway_enforcer.py</code>, <code>watchdog_monitor.py</code>, iptables FORWARD chains, Mosquitto MQTT broker, systemd services."]
+},
+{ kicker:"Step 1", title:"A new device joins and gets its rulebook",
+  lead:"When the camera connects, the guard fetches its rulebook, checks the seal, and turns each line into a firewall rule. From then on, every message is checked.",
+  caption:"Press <b>▶ Play</b>.",
+  build(){ scene();
+    node("cam", 140, 205, "camera", "Smart camera", "just switched on", cv("--muted")); $("n-cam").dataset.icon="camera";
+    node("factory", 815, 205, "factory", "Rulebook server", "manufacturer", cv("--muted"));
+    wire("cam","guard"); wire("guard","factory");
+    rulebook({count:0});
+  },
+  async play(){
+    rulebook({count:0}); recolor("cam", cv("--muted")); tag("cam", null);
+    say("The camera switches on and asks to join the WiFi.");
+    await packet(["cam","guard"], "hello, I'm new", cv("--amber"));
+    say("The guard gives it an address (<b>10.42.0.17</b>). But it has <b>no rules</b> for it yet.");
+    recolor("cam", cv("--amber")); await sleep(1000);
+    say("The guard asks the manufacturer's server: <b>'please send the camera's rulebook'</b>.");
+    await packet(["guard","factory"], "send rulebook", cv("--brand"));
+    await packet(["factory","guard"], "rulebook + seal", cv("--brand"), {letter:true});
+    say("It checks the <b>seal</b>. This takes about <b>1.3 thousandths of a second</b> on the Pi.");
+    await sleep(900); seal("ok"); mark(N.guard.x, N.guard.y-60, true, "genuine");
+    say("Now it loads every line of the rulebook into the gatekeeper, all at once…", "ok");
+    rulebook({count:RULES.length, sealState:"ok"});
+    for (let i=0;i<RULES.length;i++){ hl(i,"ok"); await sleep(300); }
+    hl("x","bad"); await sleep(600); hl(null);
+    tag("cam","protected","ok");
+    say("The camera is <b>protected</b>. Anything it sends that isn't in the rulebook will be blocked.", "ok");
+  },
+  tech:["Fetch: <code>GET http://127.0.0.1:5000/mud/ip_camera.json</code>, verify RSA-PSS signature, parse ACEs, resolve DNS names, install chains <code>MUD_CAM_OUT</code> / <code>MUD_CAM_IN</code> hooked into iptables FORWARD.",
+        "Default deny: each chain ends with LOG (prefix <code>MUD_CAM_FROM_DROP</code>) and DROP.",
+        "At boot, systemd starts the server and watchdog; rules were live about 10 s after the services started."]
+},
+{ kicker:"Step 2", title:"A normal day: everything the camera needs is allowed",
+  lead:"Each message is compared with the rulebook. If a line allows it, it passes. The camera keeps working normally.",
+  caption:"Press <b>▶ Play</b>. Watch the rulebook on the right: the line that allows each message lights up green.",
+  build(){ scene();
+    node("cam", 140, 205, "camera", "Smart camera", "protected", cv("--amber")); $("n-cam").dataset.icon="camera";
+    node("cloud", 815, 120, "cloud", "Camera's cloud", "CP Plus servers", cv("--muted"));
+    node("phone", 815, 285, "phone", "Your phone app", "live view", cv("--muted"));
+    wire("cam","guard"); wire("guard","cloud"); wire("guard","phone"); wire("cloud","phone", true, [{x:900,y:205}]);
+    rulebook({sealState:"ok", tally:true});
+  },
+  async play(){
+    rulebook({sealState:"ok", tally:true});
+    const flows = [
+      ["DNS lookup", "udp", 53, "8.8.8.8", "cloud", "The camera looks up an address at <b>Google DNS</b>. Line 1 allows it."],
+      ["stay connected", "tcp", 8886, "13.203.147.54", "cloud", "It keeps a connection open to the <b>CP Plus cloud</b>. Line 2 allows it."],
+      ["app call", "tcp", 443, "3.111.59.214", "cloud", "It makes a short call to the <b>CP Plus app server</b>. Line 3 allows it."],
+      ["find address", "udp", 3478, "128.199.17.113", "cloud", "You open live view, so it finds its public address. Line 4 allows it."],
+      ["live video", "tcp", 1443, "165.22.210.193", "cloud", "It sends the video to the <b>relay server</b>. Line 5 allows it."]];
+    for (const [lbl, proto, port, ip, to, text] of flows){
+      say(text);
+      await packet(["cam","guard"], lbl, cv("--amber"));
+      const i = match(proto, port, ip); hl(i,"ok"); bump("ok"); mark(N.guard.x, N.guard.y-60, true, `line ${i+1}`);
+      await packet(["guard", to], "", cv("--ok"));
+      await sleep(300);
+    }
+    hl(null);
+    await packet(["cloud",[900,205],"phone"], "video", cv("--ok"));
+    tag("phone","video playing","ok");
+    say("<b>Live video works</b> on the phone, with the rules switched on. Protection did not break the camera.", "ok");
+  },
+  tech:["Real chain <code>MUD_CAM_OUT</code>: ESTABLISHED,RELATED accept; udp 53 → 8.8.8.8; tcp 8886 → 13.203.132.148 / 13.203.147.54; tcp 443 → 3.111.59.214; udp 3478; tcp 1443; LOG; DROP.",
+        "Finding: the STUN and relay servers never appeared in DNS, so pure DNS-name rules (RFC 8520's <code>dst-dnsname</code>) would break live view. We used a hybrid policy: names for fixed services, port rules for dynamic ones."]
+},
+{ kicker:"Step 3", title:"A hacked camera: bad traffic is stopped",
+  lead:"Now imagine an attacker has taken over the camera. Whatever it tries, the guard looks for a rulebook line that allows it. There is none, so the message is blocked and written in the log.",
+  caption:"Press <b>▶ Play</b>. No rulebook line will light up green this time.",
+  build(){ scene();
+    node("cam", 140, 205, "camera", "Smart camera", "hacked!", cv("--bad")); $("n-cam").dataset.icon="camera";
+    node("hacker", 815, 120, "hacker", "Attacker's server", "", cv("--bad"));
+    node("people", 815, 290, "people", "Other people's devices", "", cv("--muted"));
+    wire("cam","guard"); wire("guard","hacker"); wire("guard","people");
+    rulebook({sealState:"ok", tally:true});
+  },
+  async play(){
+    rulebook({sealState:"ok", tally:true}); tag("cam","hacked","bad");
+    const tries = [
+      ["infect others", "tcp", 23, "203.0.113.23", "people", "It tries to <b>infect other cameras</b> over Telnet (the Mirai trick).", ""],
+      ["get orders", "tcp", 6667, "203.0.113.66", "hacker", "It tries to <b>take orders</b> from the attacker's control server.", ""],
+      ["remote control", "tcp", 4444, "203.0.113.66", "hacker", "It tries to open a <b>remote-control connection</b> for the attacker.", ""],
+      ["steal video", "tcp", 443, "203.0.113.66", "hacker", "It tries to <b>send your video</b> to the attacker over HTTPS.", " Line 3 allows HTTPS <b>only to the CP Plus server</b>, not to this one."],
+      ["other DNS", "udp", 53, "1.1.1.1", "hacker", "It tries a <b>different DNS server</b> to sneak data out.", " Line 1 allows DNS <b>only to Google DNS</b>."]];
+    for (const [lbl, proto, port, ip, to, text, extra] of tries){
+      say(text);
+      const g = await packet(["cam","guard"], lbl, cv("--bad"), {keep:true});
+      for (let i=0;i<RULES.length;i++){ document.querySelectorAll(".rb li").forEach(li=>li.classList.remove("hl-ok","hl-bad")); $("rb"+i).classList.add("dim"); await sleep(110); $("rb"+i).classList.remove("dim"); }
+      g.remove(); hl("x","bad"); bump("bad"); mark(N.guard.x, N.guard.y-60, false, "blocked");
+      say("No line allows it, so it's <b>blocked and logged</b>." + extra, "bad");
+      await sleep(1700);
+    }
+    hl(null);
+    say("All 5 blocked. In our real test, <b>72 out of 72</b> bad attempts were blocked and <b>15 out of 15</b> good ones still worked.", "ok");
+  },
+  tech:["Attack test (<code>tests/attack_test.py</code>): 29 test connections × 3 trials. Baseline run without rules first; only tests that succeed without MUD are counted. Canary probe before and after; off-path check per trial.",
+        "Result: enforcement accuracy 100% (87/87). Attacker addresses shown here use 203.0.113.0/24, a documentation-only range (RFC 5737).",
+        "Example real log line: <code>MUD_CAM_FROM_DROP: IN=wlan0 OUT=wlan1 SRC=10.42.0.17 DST=106.192.246.173 PROTO=UDP DPT=55952</code>"]
+},
+{ kicker:"Our addition 1", title:"An attacker on the same WiFi", mode:true,
+  lead:"So far every message went out through the guard. But two devices on the same WiFi can talk directly through the antenna, without passing the guard. We found this hole on our real setup and fixed it.",
+  caption:"Use the switch: <b>Without our fix</b> / <b>With our fix</b>, then press <b>▶ Play</b>.",
+  build(){ clear();
+    zone(20, 20, 330, 390, "Same WiFi network");
+    node("cam", 120, 110, "camera", "Smart camera", "", cv("--amber")); $("n-cam").dataset.icon="camera";
+    node("laptop", 120, 295, "laptop", "Attacker's laptop", "on the same WiFi", cv("--bad"));
+    node("ant", 290, 215, "antenna", "WiFi antenna", "", cv("--muted"));
+    node("guard", 600, 215, "guard", "The guard", "Raspberry Pi", cv("--brand")); $("n-guard").dataset.icon="guard";
+    node("cloud", 840, 215, "cloud", "Internet", "", cv("--muted"));
+    wire("cam","ant", true); wire("laptop","ant", true); wire("ant","guard"); wire("guard","cloud");
+    facts("What changes with our fix", [
+      "<b>Without the fix:</b> the antenna passes messages straight from laptop to camera. The guard never sees them, so the rulebook can't help.",
+      "<b>Fix part 1 (WiFi isolation):</b> the antenna refuses to pass messages directly between devices.",
+      "<b>Fix part 2:</b> the Pi answers 'send everything to me', so every message has to go through the guard.",
+      "<b>Real result:</b> 36 out of 36 same-WiFi attack attempts on the camera blocked."]);
+  },
+  async play(){
+    tag("cam", null);
+    if (S.mode === "before"){
+      say("The laptop asks: <b>'who is the camera?'</b> The camera answers directly.");
+      await packet(["laptop","ant","cam"], "who is 10.42.0.17?", cv("--muted"));
+      await packet(["cam","ant","laptop"], "it's me", cv("--muted"));
+      say("The laptop attacks the camera. The antenna passes it <b>straight across</b>…", "bad");
+      await packet(["laptop","ant","cam"], "attack", cv("--bad"));
+      tag("cam","reached!","bad"); recolor("cam", cv("--bad"));
+      say("The attack <b>reached the camera</b>. The guard saw nothing: its counters stayed at <b>0</b>. That's what we measured before the fix.", "bad");
+    } else {
+      say("The laptop asks: <b>'who is the camera?'</b> WiFi isolation stops the question reaching the camera directly…");
+      await packet(["laptop","ant"], "who is 10.42.0.17?", cv("--muted"));
+      mark(N.ant.x - 50, N.ant.y - 45, false);
+      await packet(["ant","guard"], "", cv("--muted"));
+      say("…so <b>the guard answers</b>: 'send it to me'.");
+      await packet(["guard","ant","laptop"], "send it to me", cv("--brand"));
+      say("The attack now has to go <b>through the guard</b>. The camera's rulebook says nobody may start a conversation with the camera…");
+      await packet(["laptop","ant","guard"], "attack", cv("--bad"));
+      mark(N.guard.x, N.guard.y-60, false, "blocked");
+      say("<b>Blocked and logged.</b> In our real test, all <b>36</b> same-WiFi attack attempts were blocked.", "ok");
+    }
+  },
+  tech:["Evidence before fix: laptop → camera ping replied with TTL=64 and MUD counters stayed 0 (frames bridged inside the WiFi chip, never entering Linux).",
+        "Fix: <code>nmcli ... 802-11-wireless.ap-isolation yes</code> + <code>net.ipv4.conf.wlan0.proxy_arp=1</code>, <code>proxy_arp_pvlan=1</code>, <code>send_redirects=0</code>. Packets hairpin through FORWARD (IN=wlan0 OUT=wlan0).",
+        "After: <code>MUD_CAM_TO_DROP ... SRC=10.42.0.112 DST=10.42.0.17 TTL=127</code>. Companies normally need managed switches with Private VLANs for this (research gap 5.2)."]
+},
+{ kicker:"Our addition 2", title:"Stopping fake messages on the message board", mode:true,
+  lead:"Smart-home devices often talk through a 'message board' (MQTT). Each message is pinned under a topic, like home/door/unlock. A normal firewall only sees 'someone is using the message board', not which topic. So a hacked sensor could pin a fake 'unlock the door'.",
+  caption:"Use the switch: <b>Without our fix</b> / <b>With our fix</b>, then press <b>▶ Play</b>.",
+  build(){ clear();
+    node("sensor", 140, 120, "sensor", "Temperature sensor", "hacked!", cv("--bad"));
+    node("board", 480, 215, "board", "Message board", "MQTT broker (Mosquitto)", cv("--brand"));
+    node("lock", 820, 120, "lock", "Smart door lock", "example device", cv("--ink"));
+    node("rogue", 140, 320, "laptop", "Unknown device", "no password", cv("--muted"));
+    wire("sensor","board"); wire("board","lock"); wire("rogue","board");
+    facts("The sensor's allowed topics", [
+      "With our fix, the sensor's rulebook also lists its <b>topics</b>:",
+      "<b>May post to:</b> sensors/temperature",
+      "<b>May read:</b> sensors/temperature/config",
+      "Everything else is refused, and every device needs its own <b>password</b>.",
+      "<b>Real result:</b> accuracy went from <b>20%</b> (6 of 30 checks right) to <b>100%</b> (30 of 30)."]);
+  },
+  async play(){
+    tag("lock", null); recolor("lock", cv("--ink")); tag("sensor","hacked","bad"); tag("rogue", null);
+    say("Normal job: the sensor posts <b>31.5 °C</b> under <b>sensors/temperature</b>. Allowed either way.");
+    await packet(["sensor","board"], "sensors/temperature", cv("--amber"), {letter:true});
+    mark(N.board.x, N.board.y-62, true); await sleep(900);
+    if (S.mode === "before"){
+      say("Now the hacked sensor pins a fake <b>home/door/unlock</b>. The board accepts any topic…", "bad");
+      await packet(["sensor","board"], "home/door/unlock", cv("--bad"), {letter:true});
+      await packet(["board","lock"], "UNLOCK", cv("--bad"), {letter:true});
+      recolor("lock", cv("--bad")); const s = document.querySelector("#n-lock .shackle"); if (s) s.setAttribute("transform","translate(-10,-6) rotate(-25)");
+      tag("lock","door unlocked!","bad");
+      say("<b>The door unlocks.</b> The firewall only saw 'message board traffic', which was allowed.", "bad");
+      await sleep(1600);
+      say("And an unknown device with <b>no password</b> can join the board too.", "bad");
+      await packet(["rogue","board"], "let me in", cv("--muted"));
+      tag("rogue","accepted","bad");
+    } else {
+      say("The hacked sensor pins a fake <b>home/door/unlock</b>. The board checks the sensor's allowed topics…");
+      await packet(["sensor","board"], "home/door/unlock", cv("--bad"), {letter:true});
+      mark(N.board.x, N.board.y-62, false, "not your topic");
+      tag("lock","still locked","ok");
+      say("<b>Refused.</b> The sensor may only post temperature readings. The door stays locked.", "ok");
+      await sleep(1700);
+      say("An unknown device tries to join with <b>no password</b>…");
+      await packet(["rogue","board"], "let me in", cv("--muted"));
+      mark(N.board.x, N.board.y-62, false, "no password");
+      tag("rogue","refused","ok");
+      say("<b>Refused.</b> Every device needs its own password, created from its rulebook.", "ok");
+    }
+  },
+  tech:["Extension added to the signed MUD file: <code>\"extensions\": [\"mqtt-topic-acl\"]</code> with <code>username</code>, <code>publish</code>, <code>subscribe</code> lists.",
+        "<code>mqtt_acl_manager.py</code> verifies the signature, then writes Mosquitto's ACL and hashed password file; <code>allow_anonymous false</code>.",
+        "Test (<code>mqtt_acl_test.py</code>, 10 cases × 3): port-level only 20% (6/30), with topic ACL 100% (30/30). The smart lock is an example device used to show the impact (research gap 5.3)."]
+},
+{ kicker:"Our addition 3", title:"Updating the rulebook safely", mode:true,
+  lead:"Devices get updates, so rulebooks change. Every 2 seconds the guard checks for a new version. A new rulebook must pass the seal check, and then all the rules are swapped in one go.",
+  caption:"Press <b>▶ Play</b>. Then try the switch to see what happens if rules are swapped one by one.",
+  build(){ scene();
+    node("cam", 140, 205, "camera", "Smart camera", "hacked, waiting", cv("--bad")); $("n-cam").dataset.icon="camera";
+    node("factory", 815, 120, "factory", "Manufacturer", "", cv("--muted"));
+    node("hacker", 815, 290, "hacker", "Attacker", "", cv("--bad"));
+    wire("cam","guard"); wire("guard","factory"); wire("guard","hacker");
+    rulebook({sealState:"ok"});
+  },
+  async play(){
+    rulebook({sealState:"ok"});
+    say("An attacker sends a <b>fake rulebook</b> that says 'allow everything'.");
+    await packet(["hacker","guard"], "fake rulebook", cv("--bad"), {letter:true});
+    say("The guard checks the seal…"); await sleep(800);
+    seal("bad"); mark(N.guard.x, N.guard.y-60, false, "fake seal");
+    say("<b>Fake seal: rejected.</b> The old, safe rules stay in place.", "ok");
+    await sleep(1800); seal("ok");
+    say("Now the real manufacturer publishes an <b>update</b>.");
+    await packet(["factory","guard"], "new rulebook", cv("--brand"), {letter:true});
+    seal("ok"); mark(N.guard.x, N.guard.y-60, true, "genuine");
+    await sleep(700);
+    if (S.mode === "before"){
+      say("<b>Old way:</b> wipe the rules, then add them back one by one. For a moment the list is <b>empty</b>…", "bad");
+      document.querySelectorAll(".rb li").forEach(li=>li.classList.add("dim"));
+      const p = packet(["cam","guard","hacker"], "remote control", cv("--bad"));
+      await sleep(900);
+      await p; mark(N.hacker.x, N.hacker.y-60, false, "got out!");
+      say("…and the hacked camera's message <b>slipped out</b> during that gap. On the Pi the gap lasted 0.2 to 0.7 seconds.", "bad");
+      for (const li of document.querySelectorAll(".rb li")){ li.classList.remove("dim"); await sleep(250); }
+    } else {
+      say("<b>Our way:</b> all rules are replaced <b>in one go</b>, in about <b>0.17 seconds</b>. There is never a moment with no rules.", "ok");
+      const g = await packet(["cam","guard"], "remote control", cv("--bad"), {keep:true});
+      g.remove(); hl("x","bad"); mark(N.guard.x, N.guard.y-60, false, "blocked");
+      await sleep(1200); hl(null);
+      say("The hacked camera's message is <b>blocked</b>, even during the update.", "ok");
+    }
+  },
+  tech:["<code>watchdog_monitor.py</code> polls every 2 s, compares the file's SHA-256, verifies the signature, then applies both chains in one <code>iptables-restore --noflush</code> transaction and logs to <code>logs/policy_reload_log.csv</code>.",
+        "Measured over 10 updates: apply median 166 ms (fetch ~43, verify ~1.3, parse ~0.9, install ~110–140 ms); end-to-end median 1.12 s.",
+        "Why atomic: an empty user chain returns to FORWARD, whose default policy is ACCEPT (fail-open). Research gap 5.4."]
+},
+{ kicker:"Try it yourself", title:"You are the camera. What do you try?", lab:true,
+  lead:"Pick something for the camera to do. The guard checks it against the rulebook and shows which line decided.",
+  caption:"Choose an action on the right and press <b>Send</b>.",
+  build(){ scene();
+    node("cam", 140, 205, "camera", "Smart camera", "10.42.0.17", cv("--amber")); $("n-cam").dataset.icon="camera";
+    node("cloud", 815, 120, "cloud", "Camera's cloud", "", cv("--muted"));
+    node("hacker", 815, 290, "hacker", "Somewhere else", "", cv("--bad"));
+    wire("cam","guard"); wire("guard","cloud"); wire("guard","hacker");
+    const acts = [
+      ["Talk to the CP Plus cloud (TCP 8886)", "tcp", 8886, "13.203.147.54", "cloud"],
+      ["Call the CP Plus app server (HTTPS 443)", "tcp", 443, "3.111.59.214", "cloud"],
+      ["Look up an address at Google DNS (UDP 53)", "udp", 53, "8.8.8.8", "cloud"],
+      ["Send live video to the relay (TCP 1443)", "tcp", 1443, "165.22.210.193", "cloud"],
+      ["Send HTTPS to an unknown server (443)", "tcp", 443, "203.0.113.80", "hacker"],
+      ["Use a different DNS server (1.1.1.1)", "udp", 53, "1.1.1.1", "hacker"],
+      ["Try to infect others with Telnet (23)", "tcp", 23, "203.0.113.23", "hacker"],
+      ["Open a remote-control shell (4444)", "tcp", 4444, "203.0.113.66", "hacker"],
+      ["Connect to the CP Plus cloud on the wrong port (8080)", "tcp", 8080, "13.203.147.54", "cloud"]];
+    $("side").innerHTML = `<h2>Choose an action</h2>
+      <form class="lab" id="lab">
+        <label for="labAct">What does the camera try?
+          <select id="labAct">${acts.map((a,i)=>`<option value="${i}">${a[0]}</option>`).join("")}</select></label>
+        <button class="btn primary" id="labSend" type="submit">Send</button>
+        <div class="verdict" id="verdict">The result will appear here.</div>
+      </form>
+      <ul class="rb" style="margin-top:4px">${RULES.map((r,i)=>`<li id="rb${i}"><span class="n">${i+1}</span><span>${r.t}<small>${r.s}</small></span></li>`).join("")}
+        <li class="deny" id="rbx"><span class="n">✕</span><span><b>Anything else: not allowed.</b><small>default deny</small></span></li></ul>`;
+    $("lab").addEventListener("submit", async e => {
+      e.preventDefault();
+      const a = acts[+$("labAct").value]; const [label, proto, port, ip, to] = a;
+      $("labSend").disabled = true; hl(null);
+      const v = $("verdict"); v.className = "verdict"; v.textContent = "Checking…";
+      try {
+        say(`The camera tries: <b>${label}</b>`);
+        const g = await packet(["cam","guard"], proto.toUpperCase()+" "+port, cv("--amber"), {keep:true});
+        const i = match(proto, port, ip);
+        if (i >= 0){ g.remove(); hl(i,"ok"); mark(N.guard.x, N.guard.y-60, true, `line ${i+1}`);
+          await packet(["guard",to], "", cv("--ok"));
+          v.className = "verdict ok"; v.innerHTML = `<b>Allowed</b> by line ${i+1}: ${RULES[i].t}.`;
+          say(`<b>Allowed.</b> Line ${i+1} of the rulebook permits it.`, "ok");
+        } else { g.remove(); hl("x","bad"); mark(N.guard.x, N.guard.y-60, false, "blocked");
+          const near = RULES.findIndex(r=>r.proto===proto && r.port===port);
+          v.className = "verdict bad"; v.innerHTML = `<b>Blocked.</b> ` + (near>=0 ? `Line ${near+1} allows this kind of message, but only to its own server.` : `No line in the rulebook allows it.`);
+          say(`<b>Blocked and logged.</b> ` + (near>=0 ? `Right kind of message, wrong destination.` : `Nothing in the rulebook allows it.`), "bad");
+        }
+      } catch(err){ if (err !== ABORT) console.error(err); }
+      $("labSend").disabled = false;
+    });
+  },
+  async play(){ say("Choose an action on the right and press <b>Send</b>."); },
+  tech:["The guard's decision uses the same first-match logic as the real iptables chain: protocol, destination port and destination address must all match one line.",
+        "Rules for the cloud servers are written with DNS names in the MUD file; the gateway resolves them to IP addresses and refreshes them."]
+},
+{ kicker:"Results", title:"What we measured on the real Pi", big:true,
+  lead:"Every number here comes from tests we ran on the real setup on 8 October 2026. Raw results are saved in the project's tests folder.",
+  caption:"Our project closes all six gaps we found in published research, and backs each one with a measurement.",
+  bigHtml:`<div class="big">
+    <div><b>100%</b><span>of 87 test messages handled correctly</span><small>72 bad ones blocked, 15 good ones allowed</small></div>
+    <div><b>36 / 36</b><span>same-WiFi attacks on the camera blocked</span><small>after our WiFi-isolation fix</small></div>
+    <div><b>20% → 100%</b><span>fake message-board posts stopped</span><small>before vs after our topic rules (30 checks)</small></div>
+    <div><b>0.17 s</b><span>to apply a new rulebook</span><small>median of 10 updates; about 1.1 s including the 2-second check</small></div>
+    <div><b>0.0013 s</b><span>to check a rulebook's seal</span><small>RSA-2048 signature</small></div>
+    <div><b>~10 s</b><span>back to full protection after a power cut</span><small>services restart and reload the rules by themselves</small></div>
+  </div>`,
+  build(){ facts("Research gaps closed", [
+      "<b>5.1</b> Real hardware, not a simulation",
+      "<b>5.2</b> Same-WiFi protection without expensive switches",
+      "<b>5.3</b> Message-board (MQTT) topic control",
+      "<b>5.4</b> Safe, instant rulebook updates",
+      "<b>5.5</b> Every block and update is logged",
+      "<b>5.6</b> Reproducible: parts list, measurements and code published"]); },
+  async play(){},
+  tech:["Accuracy test: 29 cases × 3 trials, baseline vs enforced, canary and off-path checks. MQTT test: 10 cases × 3. Reload test: 10 signed updates.",
+        "Results files: <code>tests/accuracy_report.csv</code>, <code>tests/reload_latency_results.csv</code>, <code>tests/mqtt_acl_*.csv</code>, <code>logs/policy_reload_log.csv</code>, <code>docs/hardware_bom.csv</code>."]
+},
+{ kicker:"Summary", title:"In one sentence", big:true,
+  lead:"A Raspberry Pi guard that reads each smart device's signed rulebook and lets it do only what its maker intended, and we extended the standard to cover same-WiFi attacks, message-board topics and safe updates.",
+  caption:"Thank you. Questions?",
+  bigHtml:`<div class="big">
+    <div><b>The idea</b><span>Manufacturer writes a sealed rulebook (MUD, RFC 8520)</span><small>the guard follows it and blocks everything else</small></div>
+    <div><b>What's new</b><span>Same-WiFi protection, MQTT topic rules, safe atomic updates</span><small>plus auto-start at boot and full measurements</small></div>
+    <div><b>Proof</b><span>Real camera, real sensor, real attacks</span><small>100% accuracy, 36/36, 20%→100%, 0.17 s</small></div>
+    <div><b>Next</b><span>Automatic device recognition, certificates, dashboard</span><small>see the project guide, section 9</small></div>
+  </div>`,
+  build(){ facts("Team", ["<b>Goutam · Joshua Lewis · Dhanush S</b>", "Guide: <b>Dr. Nagaraja B G</b>, Professor and Associate Dean, ECE", "Vidyavardhaka College of Engineering, Mysuru", "Code: github.com/Goutam1607/MUD_IoT"]); },
+  async play(){},
+  tech:["Limitations: MUD URL configured (camera doesn't announce one), simplified signature transport, identity by IP address, port-only rules for dynamic video servers, IPv4 only, MQTT without TLS (local sensor)."]
+},
+];
+
+/* ================= navigation ================= */
+function renderDots(){
+  $("dots").innerHTML = PAGES.map((p,i)=>`<button class="dot ${i<S.page?"done":""} ${i===S.page?"on":""}" type="button" aria-label="Page ${i+1}: ${p.title.replace(/"/g,"")}" title="${p.kicker}: ${p.title.replace(/"/g,"")}" data-i="${i}"></button>`).join("");
+  $("pageno").textContent = `${S.page+1} / ${PAGES.length}`;
+}
+function go(i){
+  S.run++; S.playing = false;
+  S.page = Math.max(0, Math.min(PAGES.length-1, i));
+  const p = PAGES[S.page];
+  $("kicker").textContent = p.kicker; $("title").textContent = p.title; $("lead").textContent = p.lead;
+  $("seg").hidden = !p.mode;
+  $("playBtn").hidden = !!p.big || !!p.lab;
+  $("stagebox").hidden = !!p.big; $("bigbox").hidden = !p.big;
+  if (p.big) $("bigbox").innerHTML = p.bigHtml;
+  $("techBody").innerHTML = (p.tech||[]).map(t=>`<p style="margin:0">${t}</p>`).join("");
+  $("tech").hidden = !(p.tech && p.tech.length);
+  clear(); $("side").innerHTML = "";
+  p.build();
+  say(p.caption);
+  $("prevBtn").disabled = S.page === 0;
+  $("nextBtn").disabled = S.page === PAGES.length-1;
+  $("playBtn").textContent = "▶ Play"; $("playBtn").disabled = false;
+  renderDots();
+  try { history.replaceState(null, "", "#p" + (S.page+1)); } catch(e){}
+}
+async function play(){
+  const p = PAGES[S.page];
+  if (S.playing) return;
+  S.run++; S.playing = true;
+  const myRun = S.run;
+  $("playBtn").disabled = true; $("playBtn").textContent = "Playing…";
+  clear(); p.build();
+  try { await p.play(); } catch(e){ if (e !== ABORT) console.error(e); }
+  if (myRun === S.run){ S.playing = false; $("playBtn").disabled = false; $("playBtn").textContent = "↻ Play again"; }
+}
+function setMode(m){
+  S.mode = m;
+  $("segBefore").setAttribute("aria-pressed", String(m==="before"));
+  $("segAfter").setAttribute("aria-pressed", String(m==="after"));
+  S.playing = false; S.run++; play();
+}
+
+$("dots").addEventListener("click", e => { const b = e.target.closest(".dot"); if (b) go(+b.dataset.i); });
+$("prevBtn").addEventListener("click", () => go(S.page-1));
+$("nextBtn").addEventListener("click", () => go(S.page+1));
+$("playBtn").addEventListener("click", play);
+$("segBefore").addEventListener("click", () => setMode("before"));
+$("segAfter").addEventListener("click", () => setMode("after"));
+$("speed").addEventListener("change", e => { S.speed = parseFloat(e.target.value); });
+$("fsBtn").addEventListener("click", () => { const d = document.documentElement; (document.fullscreenElement ? document.exitFullscreen() : d.requestFullscreen?.())?.catch?.(()=>{}); });
+document.addEventListener("keydown", e => {
+  if (e.target.closest("input,select,textarea")) return;
+  if (e.key === "ArrowRight" || e.key === "PageDown"){ e.preventDefault(); go(S.page+1); }
+  else if (e.key === "ArrowLeft" || e.key === "PageUp"){ e.preventDefault(); go(S.page-1); }
+  else if (e.key === " " || e.key === "Enter"){ if (!e.target.closest("button,summary")){ e.preventDefault(); play(); } }
+});
+const start = (() => { const m = (location.hash||"").match(/^#p(\d+)$/); return m ? +m[1]-1 : 0; })();
+go(start);
+})();
+</script>
+
+</body>
+</html>
