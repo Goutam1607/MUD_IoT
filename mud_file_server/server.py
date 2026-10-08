@@ -64,5 +64,5 @@ def index():
 if __name__ == '__main__':
     print("[MUD FILE SERVER] Starting on http://localhost:5000")
     print("[MUD FILE SERVER] MUD files available at: http://localhost:5000/mud/<filename>")
-    print("[MUD FILE SERVER] All files are signed with HMAC-SHA256")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    print("[MUD FILE SERVER] All files are signed with RSA-2048 (PSS, SHA-256)")
+    app.run(host='0.0.0.0', port=5000, debug=False)

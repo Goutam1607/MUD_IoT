@@ -1,0 +1,30 @@
+id,group,proto,host,ip,port,expected,result,reached_trials,trials,median_ms,reason
+A01,east-west,icmp,10.42.0.17,10.42.0.17,0,BLOCK,REACHED,3,3,30.4,ping camera
+A02,east-west,tcp,10.42.0.17,10.42.0.17,21,BLOCK,REACHED,3,3,2074.5,FTP to camera
+A03,east-west,tcp,10.42.0.17,10.42.0.17,22,BLOCK,REACHED,3,3,2076.6,SSH to camera
+A04,east-west,tcp,10.42.0.17,10.42.0.17,23,BLOCK,REACHED,3,3,2075.0,Telnet to camera (Mirai-style)
+A05,east-west,tcp,10.42.0.17,10.42.0.17,80,BLOCK,REACHED,3,3,2076.9,HTTP admin page
+A06,east-west,tcp,10.42.0.17,10.42.0.17,443,BLOCK,REACHED,3,3,2073.0,HTTPS admin page
+A07,east-west,tcp,10.42.0.17,10.42.0.17,554,BLOCK,REACHED,3,3,2072.0,RTSP video grab
+A08,east-west,tcp,10.42.0.17,10.42.0.17,1883,BLOCK,REACHED,3,3,2075.9,MQTT
+A09,east-west,tcp,10.42.0.17,10.42.0.17,6667,BLOCK,REACHED,3,3,2076.4,port 6667
+A10,east-west,tcp,10.42.0.17,10.42.0.17,8000,BLOCK,REACHED,3,3,9.2,alt web port
+A11,east-west,tcp,10.42.0.17,10.42.0.17,8080,BLOCK,REACHED,3,3,2076.0,alt web port
+A12,east-west,tcp,10.42.0.17,10.42.0.17,8886,BLOCK,REACHED,3,3,2076.1,"camera cloud port, inbound"
+B01,as-camera,dns,8.8.8.8,8.8.8.8,53,PASS,REACHED,3,3,83.8,DNS to approved resolver
+B02,as-camera,tcp,m6-cube.cppluscloud.com,13.203.132.148,8886,PASS,REACHED,3,3,79.7,cloud control (dnsname rule)
+B03,as-camera,tcp,a6-cube.cppluscloud.com,3.111.59.214,443,PASS,REACHED,3,3,76.4,cloud API (dnsname rule)
+B04,as-camera,stun,stun.cloudflare.com,162.159.207.0,3478,PASS,REACHED,3,3,53.1,"STUN, any destination"
+B05,as-camera,tcp,portquiz.net,35.180.139.74,1443,PASS,REACHED,3,3,207.3,"video relay port, any destination"
+B06,as-camera,dns,1.1.1.1,1.1.1.1,53,BLOCK,REACHED,3,3,62.9,DNS to unapproved resolver
+B07,as-camera,tcp,1.1.1.1,1.1.1.1,443,BLOCK,REACHED,3,3,71.1,"allowed port, wrong destination"
+B08,as-camera,tcp,portquiz.net,35.180.139.74,8886,BLOCK,REACHED,3,3,316.5,"allowed port, wrong destination"
+B09,as-camera,tcp,portquiz.net,35.180.139.74,80,BLOCK,REACHED,3,3,329.4,plain HTTP exfiltration
+B10,as-camera,tcp,portquiz.net,35.180.139.74,22,BLOCK,REACHED,3,3,241.9,outbound SSH
+B11,as-camera,tcp,portquiz.net,35.180.139.74,23,BLOCK,REACHED,3,3,200.1,outbound Telnet (botnet spread)
+B12,as-camera,tcp,portquiz.net,35.180.139.74,4444,BLOCK,REACHED,3,3,188.8,reverse shell port
+B13,as-camera,tcp,portquiz.net,35.180.139.74,6667,BLOCK,REACHED,3,3,187.7,IRC botnet C2
+B14,as-camera,tcp,portquiz.net,35.180.139.74,3389,BLOCK,REACHED,3,3,194.5,RDP
+B15,as-camera,tcp,portquiz.net,35.180.139.74,8080,BLOCK,REACHED,3,3,196.7,alt HTTP
+B16,as-camera,tcp,portquiz.net,35.180.139.74,31337,BLOCK,REACHED,2,3,198.1,backdoor port
+B17,as-camera,ntp,pool.ntp.org,65.0.119.56,123,BLOCK,REACHED,3,3,78.3,NTP (not in MUD file)

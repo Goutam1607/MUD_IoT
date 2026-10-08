@@ -1,0 +1,533 @@
+{
+  "meta": {
+    "label": "baseline",
+    "time": "2026-10-08 12:20:18",
+    "trials": 3,
+    "timeout_s": 3.0,
+    "duration_s": 7.2
+  },
+  "results": [
+    {
+      "id": "A01",
+      "group": "east-west",
+      "proto": "icmp",
+      "host": "10.42.0.17",
+      "ip": "10.42.0.17",
+      "port": 0,
+      "expected": "BLOCK",
+      "reason": "ping camera",
+      "trials": [
+        "REACHED",
+        "REACHED",
+        "REACHED"
+      ],
+      "reached_trials": 3,
+      "result": "REACHED",
+      "median_ms": 30.4
+    },
+    {
+      "id": "A02",
+      "group": "east-west",
+      "proto": "tcp",
+      "host": "10.42.0.17",
+      "ip": "10.42.0.17",
+      "port": 21,
+      "expected": "BLOCK",
+      "reason": "FTP to camera",
+      "trials": [
+        "REACHED",
+        "REACHED",
+        "REACHED"
+      ],
+      "reached_trials": 3,
+      "result": "REACHED",
+      "median_ms": 2074.5
+    },
+    {
+      "id": "A03",
+      "group": "east-west",
+      "proto": "tcp",
+      "host": "10.42.0.17",
+      "ip": "10.42.0.17",
+      "port": 22,
+      "expected": "BLOCK",
+      "reason": "SSH to camera",
+      "trials": [
+        "REACHED",
+        "REACHED",
+        "REACHED"
+      ],
+      "reached_trials": 3,
+      "result": "REACHED",
+      "median_ms": 2076.6
+    },
+    {
+      "id": "A04",
+      "group": "east-west",
+      "proto": "tcp",
+      "host": "10.42.0.17",
+      "ip": "10.42.0.17",
+      "port": 23,
+      "expected": "BLOCK",
+      "reason": "Telnet to camera (Mirai-style)",
+      "trials": [
+        "REACHED",
+        "REACHED",
+        "REACHED"
+      ],
+      "reached_trials": 3,
+      "result": "REACHED",
+      "median_ms": 2075.0
+    },
+    {
+      "id": "A05",
+      "group": "east-west",
+      "proto": "tcp",
+      "host": "10.42.0.17",
+      "ip": "10.42.0.17",
+      "port": 80,
+      "expected": "BLOCK",
+      "reason": "HTTP admin page",
+      "trials": [
+        "REACHED",
+        "REACHED",
+        "REACHED"
+      ],
+      "reached_trials": 3,
+      "result": "REACHED",
+      "median_ms": 2076.9
+    },
+    {
+      "id": "A06",
+      "group": "east-west",
+      "proto": "tcp",
+      "host": "10.42.0.17",
+      "ip": "10.42.0.17",
+      "port": 443,
+      "expected": "BLOCK",
+      "reason": "HTTPS admin page",
+      "trials": [
+        "REACHED",
+        "REACHED",
+        "REACHED"
+      ],
+      "reached_trials": 3,
+      "result": "REACHED",
+      "median_ms": 2073.0
+    },
+    {
+      "id": "A07",
+      "group": "east-west",
+      "proto": "tcp",
+      "host": "10.42.0.17",
+      "ip": "10.42.0.17",
+      "port": 554,
+      "expected": "BLOCK",
+      "reason": "RTSP video grab",
+      "trials": [
+        "REACHED",
+        "REACHED",
+        "REACHED"
+      ],
+      "reached_trials": 3,
+      "result": "REACHED",
+      "median_ms": 2072.0
+    },
+    {
+      "id": "A08",
+      "group": "east-west",
+      "proto": "tcp",
+      "host": "10.42.0.17",
+      "ip": "10.42.0.17",
+      "port": 1883,
+      "expected": "BLOCK",
+      "reason": "MQTT",
+      "trials": [
+        "REACHED",
+        "REACHED",
+        "REACHED"
+      ],
+      "reached_trials": 3,
+      "result": "REACHED",
+      "median_ms": 2075.9
+    },
+    {
+      "id": "A09",
+      "group": "east-west",
+      "proto": "tcp",
+      "host": "10.42.0.17",
+      "ip": "10.42.0.17",
+      "port": 6667,
+      "expected": "BLOCK",
+      "reason": "port 6667",
+      "trials": [
+        "REACHED",
+        "REACHED",
+        "REACHED"
+      ],
+      "reached_trials": 3,
+      "result": "REACHED",
+      "median_ms": 2076.4
+    },
+    {
+      "id": "A10",
+      "group": "east-west",
+      "proto": "tcp",
+      "host": "10.42.0.17",
+      "ip": "10.42.0.17",
+      "port": 8000,
+      "expected": "BLOCK",
+      "reason": "alt web port",
+      "trials": [
+        "REACHED",
+        "REACHED",
+        "REACHED"
+      ],
+      "reached_trials": 3,
+      "result": "REACHED",
+      "median_ms": 9.2
+    },
+    {
+      "id": "A11",
+      "group": "east-west",
+      "proto": "tcp",
+      "host": "10.42.0.17",
+      "ip": "10.42.0.17",
+      "port": 8080,
+      "expected": "BLOCK",
+      "reason": "alt web port",
+      "trials": [
+        "REACHED",
+        "REACHED",
+        "REACHED"
+      ],
+      "reached_trials": 3,
+      "result": "REACHED",
+      "median_ms": 2076.0
+    },
+    {
+      "id": "A12",
+      "group": "east-west",
+      "proto": "tcp",
+      "host": "10.42.0.17",
+      "ip": "10.42.0.17",
+      "port": 8886,
+      "expected": "BLOCK",
+      "reason": "camera cloud port, inbound",
+      "trials": [
+        "REACHED",
+        "REACHED",
+        "REACHED"
+      ],
+      "reached_trials": 3,
+      "result": "REACHED",
+      "median_ms": 2076.1
+    },
+    {
+      "id": "B01",
+      "group": "as-camera",
+      "proto": "dns",
+      "host": "8.8.8.8",
+      "ip": "8.8.8.8",
+      "port": 53,
+      "expected": "PASS",
+      "reason": "DNS to approved resolver",
+      "trials": [
+        "REACHED",
+        "REACHED",
+        "REACHED"
+      ],
+      "reached_trials": 3,
+      "result": "REACHED",
+      "median_ms": 83.8
+    },
+    {
+      "id": "B02",
+      "group": "as-camera",
+      "proto": "tcp",
+      "host": "m6-cube.cppluscloud.com",
+      "ip": "13.203.132.148",
+      "port": 8886,
+      "expected": "PASS",
+      "reason": "cloud control (dnsname rule)",
+      "trials": [
+        "REACHED",
+        "REACHED",
+        "REACHED"
+      ],
+      "reached_trials": 3,
+      "result": "REACHED",
+      "median_ms": 79.7
+    },
+    {
+      "id": "B03",
+      "group": "as-camera",
+      "proto": "tcp",
+      "host": "a6-cube.cppluscloud.com",
+      "ip": "3.111.59.214",
+      "port": 443,
+      "expected": "PASS",
+      "reason": "cloud API (dnsname rule)",
+      "trials": [
+        "REACHED",
+        "REACHED",
+        "REACHED"
+      ],
+      "reached_trials": 3,
+      "result": "REACHED",
+      "median_ms": 76.4
+    },
+    {
+      "id": "B04",
+      "group": "as-camera",
+      "proto": "stun",
+      "host": "stun.cloudflare.com",
+      "ip": "162.159.207.0",
+      "port": 3478,
+      "expected": "PASS",
+      "reason": "STUN, any destination",
+      "trials": [
+        "REACHED",
+        "REACHED",
+        "REACHED"
+      ],
+      "reached_trials": 3,
+      "result": "REACHED",
+      "median_ms": 53.1
+    },
+    {
+      "id": "B05",
+      "group": "as-camera",
+      "proto": "tcp",
+      "host": "portquiz.net",
+      "ip": "35.180.139.74",
+      "port": 1443,
+      "expected": "PASS",
+      "reason": "video relay port, any destination",
+      "trials": [
+        "REACHED",
+        "REACHED",
+        "REACHED"
+      ],
+      "reached_trials": 3,
+      "result": "REACHED",
+      "median_ms": 207.3
+    },
+    {
+      "id": "B06",
+      "group": "as-camera",
+      "proto": "dns",
+      "host": "1.1.1.1",
+      "ip": "1.1.1.1",
+      "port": 53,
+      "expected": "BLOCK",
+      "reason": "DNS to unapproved resolver",
+      "trials": [
+        "REACHED",
+        "REACHED",
+        "REACHED"
+      ],
+      "reached_trials": 3,
+      "result": "REACHED",
+      "median_ms": 62.9
+    },
+    {
+      "id": "B07",
+      "group": "as-camera",
+      "proto": "tcp",
+      "host": "1.1.1.1",
+      "ip": "1.1.1.1",
+      "port": 443,
+      "expected": "BLOCK",
+      "reason": "allowed port, wrong destination",
+      "trials": [
+        "REACHED",
+        "REACHED",
+        "REACHED"
+      ],
+      "reached_trials": 3,
+      "result": "REACHED",
+      "median_ms": 71.1
+    },
+    {
+      "id": "B08",
+      "group": "as-camera",
+      "proto": "tcp",
+      "host": "portquiz.net",
+      "ip": "35.180.139.74",
+      "port": 8886,
+      "expected": "BLOCK",
+      "reason": "allowed port, wrong destination",
+      "trials": [
+        "REACHED",
+        "REACHED",
+        "REACHED"
+      ],
+      "reached_trials": 3,
+      "result": "REACHED",
+      "median_ms": 316.5
+    },
+    {
+      "id": "B09",
+      "group": "as-camera",
+      "proto": "tcp",
+      "host": "portquiz.net",
+      "ip": "35.180.139.74",
+      "port": 80,
+      "expected": "BLOCK",
+      "reason": "plain HTTP exfiltration",
+      "trials": [
+        "REACHED",
+        "REACHED",
+        "REACHED"
+      ],
+      "reached_trials": 3,
+      "result": "REACHED",
+      "median_ms": 329.4
+    },
+    {
+      "id": "B10",
+      "group": "as-camera",
+      "proto": "tcp",
+      "host": "portquiz.net",
+      "ip": "35.180.139.74",
+      "port": 22,
+      "expected": "BLOCK",
+      "reason": "outbound SSH",
+      "trials": [
+        "REACHED",
+        "REACHED",
+        "REACHED"
+      ],
+      "reached_trials": 3,
+      "result": "REACHED",
+      "median_ms": 241.9
+    },
+    {
+      "id": "B11",
+      "group": "as-camera",
+      "proto": "tcp",
+      "host": "portquiz.net",
+      "ip": "35.180.139.74",
+      "port": 23,
+      "expected": "BLOCK",
+      "reason": "outbound Telnet (botnet spread)",
+      "trials": [
+        "REACHED",
+        "REACHED",
+        "REACHED"
+      ],
+      "reached_trials": 3,
+      "result": "REACHED",
+      "median_ms": 200.1
+    },
+    {
+      "id": "B12",
+      "group": "as-camera",
+      "proto": "tcp",
+      "host": "portquiz.net",
+      "ip": "35.180.139.74",
+      "port": 4444,
+      "expected": "BLOCK",
+      "reason": "reverse shell port",
+      "trials": [
+        "REACHED",
+        "REACHED",
+        "REACHED"
+      ],
+      "reached_trials": 3,
+      "result": "REACHED",
+      "median_ms": 188.8
+    },
+    {
+      "id": "B13",
+      "group": "as-camera",
+      "proto": "tcp",
+      "host": "portquiz.net",
+      "ip": "35.180.139.74",
+      "port": 6667,
+      "expected": "BLOCK",
+      "reason": "IRC botnet C2",
+      "trials": [
+        "REACHED",
+        "REACHED",
+        "REACHED"
+      ],
+      "reached_trials": 3,
+      "result": "REACHED",
+      "median_ms": 187.7
+    },
+    {
+      "id": "B14",
+      "group": "as-camera",
+      "proto": "tcp",
+      "host": "portquiz.net",
+      "ip": "35.180.139.74",
+      "port": 3389,
+      "expected": "BLOCK",
+      "reason": "RDP",
+      "trials": [
+        "REACHED",
+        "REACHED",
+        "REACHED"
+      ],
+      "reached_trials": 3,
+      "result": "REACHED",
+      "median_ms": 194.5
+    },
+    {
+      "id": "B15",
+      "group": "as-camera",
+      "proto": "tcp",
+      "host": "portquiz.net",
+      "ip": "35.180.139.74",
+      "port": 8080,
+      "expected": "BLOCK",
+      "reason": "alt HTTP",
+      "trials": [
+        "REACHED",
+        "REACHED",
+        "REACHED"
+      ],
+      "reached_trials": 3,
+      "result": "REACHED",
+      "median_ms": 196.7
+    },
+    {
+      "id": "B16",
+      "group": "as-camera",
+      "proto": "tcp",
+      "host": "portquiz.net",
+      "ip": "35.180.139.74",
+      "port": 31337,
+      "expected": "BLOCK",
+      "reason": "backdoor port",
+      "trials": [
+        "REACHED",
+        "REACHED",
+        "BLOCKED"
+      ],
+      "reached_trials": 2,
+      "result": "REACHED",
+      "median_ms": 198.1
+    },
+    {
+      "id": "B17",
+      "group": "as-camera",
+      "proto": "ntp",
+      "host": "pool.ntp.org",
+      "ip": "65.0.119.56",
+      "port": 123,
+      "expected": "BLOCK",
+      "reason": "NTP (not in MUD file)",
+      "trials": [
+        "REACHED",
+        "REACHED",
+        "REACHED"
+      ],
+      "reached_trials": 3,
+      "result": "REACHED",
+      "median_ms": 78.3
+    }
+  ]
+}
