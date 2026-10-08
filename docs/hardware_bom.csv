@@ -1,0 +1,13 @@
+item,role,qty,unit_price_inr,total_inr,category,notes
+Raspberry Pi 3B+ (1 GB),MUD gateway / manager / enforcer,1,4000,4000,Gateway,approx. price paid
+microSD card 16 GB,Raspberry Pi OS Lite + project,1,400,400,Gateway,approx. price paid
+TP-Link TL-WN725N USB WiFi (RTL8188EUS),uplink to internet (wlan1),1,439,439,Gateway,price paid
+5V/2A power adapter,Pi power supply,1,0,0,Gateway,reused existing phone charger - not counted
+CP Plus CP-E35Q 3MP WiFi camera,MUD-enrolled IoT device under test,1,2549,2549,Device under test,price paid
+DHT11 temperature/humidity sensor,MUD-enrolled IoT device under test,1,0,0,Device under test,obtained free
+USB microSD card reader,one-time OS flashing,1,80,80,Setup tool,price paid
+,,,,,,
+SUBTOTAL gateway hardware,,,,4839,,Pi + SD + dongle
+SUBTOTAL devices under test,,,,2549,,
+SUBTOTAL setup tools,,,,80,,
+TOTAL project hardware,,,,7468,,
